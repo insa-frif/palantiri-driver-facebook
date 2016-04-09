@@ -7,8 +7,8 @@ login(
       return console.error(err.error);
     }
 
-    // api.listen(function callback(err, message) {
-    //   api.sendMessage(message.body, message.threadID);
-    // });
+    api.listen(function callback(err, message) {
+     api.sendMessage(message.body, message.threadID);
+    });
   }
 );
