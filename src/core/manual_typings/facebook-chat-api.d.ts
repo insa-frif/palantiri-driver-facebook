@@ -3,5 +3,11 @@
  */
 
 declare module "facebook-chat-api" {
+	interface api {
 
+	}
+
+	interface err {
+		error: string;  // TODO : any ?
+	}
 }
