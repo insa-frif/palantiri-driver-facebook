@@ -22,12 +22,12 @@ declare module "facebook-chat-api" {
 		deleteThread(threadOrThreads: number | number[], callback?: (err: Error) => any): void;
 		getUserID(name: string, callback: (err: Error, arr: number[]) => any): void;
 		getUserInfo(ids: number | number[], callback: (err: Error, arr: Map<number, FaceboolUserInfo>) => any): void;
-		listen(callback: (err: Error, eventType: string) => any): void;
+		listen(callback: (err: Error, eventType: FacebookMessage) => any): void;
 		logout(callback?: (err: Error) => any): void;
 		markAsRead(threadID: number, callback?: (err?: Error) => any): void;
 		removeUserFromGroup(userID: number, threadID: number, callback?: (err?: Error) => any): void;
 		searchForThread(name: string | number | string[] | number[], callback: (err: Error, obj: FacebookThread) => any): void;
-		sendMessage(message: FacebookMessage | string , threadID: number, callback: (err: Error, messageInfo: FacebookMessageInfo) => any): void;
+		sendMessage(message: FacebookMessage | string, threadID: number, callback?: (err: Error, messageInfo: FacebookMessageInfo) => any): void;
 		sendTypingIndicator(threadID: number, callback?: (err: Error) => any): any;
 		setOptions(options: FacebookApiOptions): void;
 		setTitle(newTitle: string, threadID: number, callback?: (err: Error, obj: FacebookConfirmation) => any): void;
@@ -35,14 +35,11 @@ declare module "facebook-chat-api" {
 		// TODO : ID numbers only ?
 	}
 
-	/* INTERFACES for api.listen */
-	interface FacebookEventType {
+	interface FacebookMessage {
+		// common
 		type: string;
 		threadID: number;
-	}
-
-	// In case eventType == "message"
-	interface FacebookMessage extends FacebookEventType {
+		// message
 		senderID: number;
 		body: string;
 		messageID: number;
@@ -50,35 +47,20 @@ declare module "facebook-chat-api" {
 		attachments?: FacebookAttachment[];
 		sticker?: number; // ID
 		url?: string;
-	}
-
-	// In case eventType == "event"
-	interface FacebookEvent extends FacebookEventType {
+		// event
 		logMessageType: string;
 		logMessageData: any | any[];
 		logMessageBody: string;
 		author: string | number;
-	}
-
-	// In case eventType == "typ"
-	interface FacebookTyp extends FacebookEventType {
+		// typ
 		isTyping: boolean;
 		from: number; // ID of the user who started typing
 		fromMobile: boolean;
-	}
-
-	// In case eventType == "read" (the user read other people's message)
-	interface FacebookRead extends FacebookEventType {
+		// read
 		time: any;  // TODO : date ? timestamp ?
-	}
-
-	// In case eventType == "read_receipt" (other user read the user's message)
-	interface FacebookReadReceipt extends FacebookRead {
+		// read_receipt
 		reader: number;
-	}
-
-	// In case eventType == "presence"
-	interface FacebookRead extends FacebookEventType {
+		// presence
 		timestamp: number;
 		userID: number;
 		statuses: FacebookStatus;
@@ -91,7 +73,6 @@ declare module "facebook-chat-api" {
 		status: FacebookUserStatus;
 		webStatus: FacebookUserStatus;
 	}
-	/* */
 
 	/* INTERFACES for attachement */
 	interface FacebookAttachment {
