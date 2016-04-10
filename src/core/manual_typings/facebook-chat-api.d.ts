@@ -18,7 +18,7 @@ declare module "facebook-chat-api" {
 		getOnlineUsers(callback: (err: Error, arr: FacebookUser) => any): void;
 		getThreadHistory(threadID: number, start: number, end: number, timestamp: any, callback: (err: Error, history: FacebookMessage[]) => any): any;
 		getThreadInfo(threadID: number, callback: (err: Error, info: FacebookThreadInfo) => any): any;
-		getThreadList(start: number, end: number, callback: (err: Error, obj: FacebookThread) => any): void;
+		getThreadList(start: number, end: number, callback: (err: Error, obj: FacebookThread[]) => any): void;
 		deleteThread(threadOrThreads: number | number[], callback?: (err: Error) => any): void;
 		getUserID(name: string, callback: (err: Error, arr: number[]) => any): void;
 		getUserInfo(ids: number | number[], callback: (err: Error, arr: Map<number, FaceboolUserInfo>) => any): void;
