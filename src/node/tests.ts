@@ -12,6 +12,7 @@ let rl = readline.createInterface({
 
 let email: string;
 let pass: string;
+let bestFriend: any;
 
 rl.question("email : ", function (mail: string) {
 	email = mail;
@@ -32,6 +33,35 @@ rl.question("email : ", function (mail: string) {
 					for(let friend of data)
 					{
 						console.log(friend.fullName);
+						if(friend.fullName === "Ruben Pericas")
+						{
+							bestFriend = friend;
+						}
+					}
+				});
+
+				console.log("Gettings 10 first thread's IDs...");
+				api.getThreadList(0, 10, function(err, data) {
+					if(err) return console.error(err);
+
+					console.log("Number of threads : " + data.length);
+					for(let thread of data)
+					{
+						console.log(thread.threadID);
+						if(thread.participantIDs[0] === bestFriend.userID)
+						{
+							console.log("this is our best friend ! Let him know by sending him a message");
+							api.sendMessage("You are my best friend !", thread.threadID, (err, info) => {
+								if(!err)
+								{
+									console.log("Now our best friend knows !");
+								}
+								else
+								{
+									console.log("An error occured, our best friend still have no clue");
+								}
+							});
+						}
 					}
 				});
 
