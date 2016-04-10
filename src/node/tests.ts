@@ -24,8 +24,19 @@ rl.question("email : ", function (mail: string) {
 					return console.error(err.error);
 				}
 
+				console.log("Gettings number of friends...");
+				api.getFriendsList(function(err, data) {
+					if(err) return console.error(err);
+
+					console.log("Number of friends :" + data.length);
+				});
+
+				console.log("Trying to echo...");
 				api.listen(function callback(err, message) {
+					console.log("Message received ! It's says : " + message.body);
+					console.log("Echoing...");
 					api.sendMessage(message.body, message.threadID);
+					console.log("Echo done !");
 				});
 			}
 		);
