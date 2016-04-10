@@ -28,7 +28,11 @@ rl.question("email : ", function (mail: string) {
 				api.getFriendsList(function(err, data) {
 					if(err) return console.error(err);
 
-					console.log("Number of friends :" + data.length);
+					console.log("Number of friends : " + data.length);
+					for(let friend of data)
+					{
+						console.log(friend.fullName);
+					}
 				});
 
 				console.log("Trying to echo...");
