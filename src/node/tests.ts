@@ -48,7 +48,7 @@ rl.question("email : ", function (mail: string) {
 					for(let thread of data)
 					{
 						console.log(thread.threadID);
-						if(thread.participantIDs[0] === bestFriend.userID)
+						if(thread.participantIDs[1] === bestFriend.userID)  // ID[0] is us
 						{
 							console.log("this is our best friend ! Let him know by sending him a message");
 							api.sendMessage("You are my best friend !", thread.threadID, (err, info) => {
@@ -67,10 +67,18 @@ rl.question("email : ", function (mail: string) {
 
 				console.log("Trying to echo...");
 				api.listen(function callback(err, message) {
-					console.log("Message received ! It's says : " + message.body);
-					console.log("Echoing...");
-					api.sendMessage(message.body, message.threadID);
-					console.log("Echo done !");
+					if(err) {
+						console.log("Can't echoing...");
+						console.log(err);
+					}
+					else {
+						console.log("Message received ! It's says : " + message.body);
+						console.log("Echoing...");
+						console.log(message.threadID);
+						api.sendMessage("J'ai recu ton message !", message.threadID);
+						console.log("Echo done !");
+					}
+
 				});
 			}
 		);
