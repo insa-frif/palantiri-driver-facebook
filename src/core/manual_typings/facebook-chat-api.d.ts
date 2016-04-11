@@ -168,12 +168,12 @@ declare module "facebook-chat-api" {
 	}
 
 	interface FacebookApiOptions {
-		logLevel: FacebookLogLevel;
-		selfListen: boolean;
-		listenEvents: boolean;
-		pageID: number;
-		updatePresence: boolean;
-		forceLogin: boolean;
+		logLevel?: FacebookLogLevel;
+		selfListen?: boolean;
+		listenEvents?: boolean;
+		pageID?: number;
+		updatePresence?: boolean;
+		forceLogin?: boolean;
 	}
 
 	enum FacebookLogLevel {
