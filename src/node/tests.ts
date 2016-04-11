@@ -48,7 +48,8 @@ rl.question("email : ", function (mail: string) {
 					for(let thread of data)
 					{
 						console.log(thread.threadID);
-						if(thread.participantIDs[1] === bestFriend.userID)  // ID[0] is us
+						// NB : we don't know if the user is 0 or 1... We must check all index in the lib
+						if(thread.participantIDs[1] === bestFriend.userID)
 						{
 							console.log("this is our best friend ! Let him know by sending him a message");
 							api.sendMessage("You are my best friend !", thread.threadID, (err, info) => {
