@@ -4,7 +4,6 @@
 
 import * as login from "facebook-chat-api";
 let readline = require('readline');
-//const EventEmitter = require('events');
 import {EventEmitter} from 'events';
 
 class FBEmitter extends EventEmitter {
@@ -18,6 +17,7 @@ class FBConnection {
 			output: process.stdout
 		});
 
+		let emitter = this.emitter;
 		rl.question("email : ", function (mail: string) {
 			let username = mail;
 			rl.question("pass : ", function (passw: string) {
@@ -28,6 +28,11 @@ class FBConnection {
 						if (err) {
 							return console.error(err.error);
 						}
+						let bestFriendThread: number;
+						api.getThreadList(0, 1, function(err, data) {
+							if(err) return console.error(err);
+							bestFriendThread = data[0].threadID;
+						});
 						api.listen(function callback(err, message) {
 							if(err) {
 								console.log("Can't echoing...");
@@ -40,8 +45,11 @@ class FBConnection {
 								api.sendMessage("J'ai recu ton message !", message.threadID);
 								console.log("Echo done !");
 							}
-
 						});
+						rl.question("Say something to Ruben !", function (rep: string) {
+							console.log("about to send " + rep + " to ruben...");
+							emitter.emit('sendMsg', api, rep, bestFriendThread);
+						})
 					}
 
 				);
@@ -80,9 +88,24 @@ class FakeAccount {
 	}
 }
 
-
 let acc = new FakeAccount();
-acc.getOrCreateConnection();
+acc.getOrCreateConnection().then((conn) => {
+	// TODO : find a way tom import typings from manual_typings
+	conn.addOneListener('sendMsg', (api: any, body: string, threadID: number) => {
+		console.log("let's send " + body + " to ruben ! (" + threadID +")");
+		api.sendMessage(body, threadID, (err, info) => {
+			if(err)
+			{
+				console.log(err);
+			}
+			else
+			{
+				console.log(info);
+				console.log("message send...");
+			}
+		});
+	})
+});
 
 //let rl = readline.createInterface({
 //	input: process.stdin,
