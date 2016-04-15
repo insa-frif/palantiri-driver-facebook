@@ -19,11 +19,11 @@ class FBConnection {
 		});
 
 		rl.question("email : ", function (mail: string) {
-			this.username = mail;
+			let username = mail;
 			rl.question("pass : ", function (passw: string) {
-				this.password = passw;
+				let password = passw;
 				login(
-					{email: this.username, password: this.password},
+					{email: username, password: password},
 					function callback (err, api) {
 						if (err) {
 							return console.error(err.error);
@@ -49,11 +49,11 @@ class FBConnection {
 		});
 	}
 
-	addOneListener(name: string, handler: () => any): void {
+	addOneListener(name: string, handler: (...args: any[]) => any): void {
 		this.emitter.on(name, handler);
 	}
 
-	removeOneListener(name: string, handler: () => any): void {
+	removeOneListener(name: string, handler: (...args: any[]) => any): void {
 		this.emitter.removeListener(name, handler);
 	}
 
