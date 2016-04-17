@@ -52,11 +52,9 @@ class FacebookProxy implements Proxy {
 
 		// TODO : once the database will be fonctionnal, get IDs from it
 		rl.question("email : ", function (mail: string) {
-			let username = mail;
 			rl.question("pass : ", function (passw: string) {
-				let password = passw;
 				login(
-					{email: username, password: password},
+					{email: mail, password: passw},
 					function callback (err, api) {
 						if(!err) {
 							this.connection.connected = true;
