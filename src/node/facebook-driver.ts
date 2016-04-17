@@ -23,6 +23,8 @@ class FacebookProxy implements Proxy {
 
 	connection: Connection;
 
+	api: any; // TODO : find a way to import types from manual typings
+
 	isCompatibleWith(protocol: string): boolean {
 		return protocol === this.protocol;
 	}
@@ -42,8 +44,7 @@ class FacebookProxy implements Proxy {
 		connection.connected = false;
 		connection.emitter = new OChatEmitter();
 		connection.listeners = [];
-
-		this.connection = connection;
+		let facebookApi: any = null;
 
 		let rl = readline.createInterface({
 			input: process.stdin,
@@ -57,9 +58,8 @@ class FacebookProxy implements Proxy {
 					{email: mail, password: passw},
 					function callback (err, api) {
 						if(!err) {
-							this.connection.connected = true;
-							// TODO : here we need to pass the api object to someone,
-							//        so we will be able to do the stuffs we want later
+							connection.connected = true;
+							facebookApi = api;
 						} else {
 							return;
 						}
@@ -67,6 +67,8 @@ class FacebookProxy implements Proxy {
 				);
 			});
 		});
+		this.api = facebookApi;
+		this.connection = connection;
 		return Promise.resolve(connection);
 	}
 
