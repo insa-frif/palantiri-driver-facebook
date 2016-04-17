@@ -22,7 +22,7 @@ class FacebookProxy implements Proxy {
 	connection: Connection;
 
 	isCompatibleWith(protocol: string): boolean {
-		return undefined;
+		return protocol === this.protocol;
 	}
 
 	getOrCreateConnection(account: UserAccount): Promise<Connection> {
