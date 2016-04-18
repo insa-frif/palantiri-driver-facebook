@@ -24,25 +24,13 @@ let readline = require('readline');
 export class FacebookProxy implements Proxy {
 	protocol: string;
 
-	connection: Connection;
-
 	api: any;
 
 	isCompatibleWith(protocol: string): boolean {
 		return protocol.toLowerCase() === this.protocol.toLowerCase();
 	}
 
-	getOrCreateConnection(account: UserAccount): Promise<Connection> {
-		// TODO : the parameter is useless,
-		//        since that it's the userAccount that
-		//        call this methods, and that the userAccount
-		//        has this proxy as attribute.
-		if(this.connection) {
-			if(this.connection.connected) {
-				return Promise.resolve(this.connection);
-			}
-		}
-
+	createConnection(account: UserAccount): Promise<Connection> {
 		let connection: Connection = new OChatConnection();
 		connection.connected = false;
 		connection.emitter = new OChatEmitter();
@@ -71,7 +59,6 @@ export class FacebookProxy implements Proxy {
 			});
 		});
 		this.api = facebookApi;
-		this.connection = connection;
 		return Promise.resolve(connection);
 	}
 
@@ -79,7 +66,7 @@ export class FacebookProxy implements Proxy {
 		// TODO : the parameter seems useless
 		let contacts: OChatContact[] = [];
 
-		if(this.api && this.connection.connected) {
+		if(this.api) {
 			let friends: any[] = [];
 			this.api.getFriendsList((err, people) => {
 				if(!err) {
@@ -95,16 +82,17 @@ export class FacebookProxy implements Proxy {
 				contactAccount.contactName = friend.fullName;
 				contact.accounts.push(contactAccount);
 				contacts.push(contact);
+				return Promise.resolve(contacts);
 			}
 		}
 
-		return Promise.resolve(contacts);
+		return Promise.reject(contacts);
 	}
 
 	getDiscussions(account: UserAccount, max?: number, filter?: (discuss: Discussion) => boolean): Promise<Discussion[]> {
 		let discussions: OChatDiscussion[] = [];
 
-		if(this.api && this.connection.connected) {
+		if(this.api) {
 			let threadsList: any[] = [];
 			this.api.getThreadList(0, max, (err, threads) => {
 				if (!err) {
@@ -135,9 +123,11 @@ export class FacebookProxy implements Proxy {
 					}
 				});
 			}
+			return Promise.resolve(discussions);
+			// TODO : i think something will go wrong here
 		}
 
-		return Promise.resolve(discussions);
+		return Promise.reject(discussions);
 	}
 
 	sendMessage(msg: Message, recipient: ContactAccount, callback?: (err: Error, succesM: Message) => any): void {
