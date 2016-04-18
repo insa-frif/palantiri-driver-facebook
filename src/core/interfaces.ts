@@ -310,7 +310,8 @@ export const MSG_FLAG_TXT = 0x0001;   //  The message contains text
 export const MSG_FLAG_IMG = 0x0002;   //  The message contains picture(s)
 export const MSG_FLAG_VID = 0x0004;   //  The message contains video(s)
 export const MSG_FLAG_FIL = 0x0008;   //  The message contains other file(s)
-export const MSG_FLAG_EDI = 0x0010;   //  The message is editable
+export const MSG_FLAG_URL = 0x0010;   //  The message contains an URL
+export const MSG_FLAG_EDI = 0x0100;   //  The message is editable
 
 /***************************************************************
  * Message is the object exchanged during a Discussion.
