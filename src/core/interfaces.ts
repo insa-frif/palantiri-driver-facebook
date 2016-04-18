@@ -65,15 +65,12 @@ export interface Proxy {
 	protocol: string;       //  La liste des protocoles supportes par le proxy
 													//  Varie selon l'implementation de l'interface.
 
-	connection: Connection; //  Une connection, existante ou non, allumee ou non,
-													//  etablie entre l'utilisateur et le service desire
-
   isCompatibleWith(protocol: string): boolean;
   //  Retourne vrai si le protocole protocol est compatible avec ce proxy.
   //  Protocol sera peut-etre encapsule dans une enum ou une struct
   //  par la suite.
 
-	getOrCreateConnection(account: UserAccount): Promise<Connection>;
+	createConnection(account: UserAccount): Promise<Connection>;
 	//  Cree une connexion au compte "account".
 	//  Si l'objet connection existe mais n'est pas actif,
 	//  i.e. il y a eu une deconnexion, une tentative de
@@ -384,10 +381,12 @@ export interface UserAccount {
 
 	driver: Proxy;          //  Le pilote permettant d'acceder a ce compte.
 
+	connection: Connection; //  Une connection, existante ou non, allumee ou non,
+                          //  etablie entre l'utilisateur et le service desire.
+
   data: Map<string, any>; //  Les autres donnees du compte.
 													//  Permet aux implementations de travailler avec
 													//  plus de details.
-													// TODO : ma map est-elle bonne ?
 
 	getContacts(): Promise<Contact[]>;
 	//  Accede a la liste des contacts du compte courant,
