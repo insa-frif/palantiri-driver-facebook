@@ -418,10 +418,14 @@ export interface UserAccount {
  * identify them and how to communicate with them.
  ***************************************************************/
 export interface ContactAccount {
-	contactName: string;    //  Le nom sous lequel se fait connaitre
-													//  le contact.
+	contactName: string;  //  Le nom sous lequel se fait connaitre
+												//  le contact.
 
-	protocol: string;       //  Le protocole associe a ce compte.
+	protocol: string;     //  Le protocole associe a ce compte.
+
+	localID: number;      //  L'identifiant du contact.
+                        //  Ceci depend directement de la base
+                        //  et donc du protocol utilise.
 }
 
 /***************************************************************
