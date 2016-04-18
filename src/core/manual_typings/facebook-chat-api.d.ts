@@ -27,7 +27,7 @@ declare module "facebook-chat-api" {
 		markAsRead(threadID: number, callback?: (err?: Error) => any): void;
 		removeUserFromGroup(userID: number, threadID: number, callback?: (err?: Error) => any): void;
 		searchForThread(name: string | number | string[] | number[], callback: (err: Error, obj: FacebookThread) => any): void;
-		sendMessage(message: FacebookMessage | string, threadID: number, callback?: (err: Error, messageInfo: FacebookMessageInfo) => any): void;
+		sendMessage(message: FacebookMessage | string, threadIDorUsersIDs: number | number[], callback?: (err: Error, messageInfo: FacebookMessageInfo) => any): void;
 		sendTypingIndicator(threadID: number, callback?: (err: Error) => any): any;
 		setOptions(options: FacebookApiOptions): void;
 		setTitle(newTitle: string, threadID: number, callback?: (err: Error, obj: FacebookConfirmation) => any): void;
