@@ -80,10 +80,11 @@ export class FacebookProxy implements Proxy {
 				let contactAccount: OChatContactAccount = new OChatContactAccount();
 				contactAccount.protocol = "facebook";
 				contactAccount.contactName = friend.fullName;
+				contactAccount.localID = friend.userID;
 				contact.accounts.push(contactAccount);
 				contacts.push(contact);
-				return Promise.resolve(contacts);
 			}
+			return Promise.resolve(contacts);
 		}
 
 		return Promise.reject(contacts);
@@ -105,6 +106,7 @@ export class FacebookProxy implements Proxy {
 				discuss.creationDate = null;
 				discuss.isPrivate = true;
 				discuss.description = thread.snippet; // TODO : is that was snippet is ?
+				discuss.participants = [];
 				discuss.settings = new Map<string, any>();
 				discuss.settings.set("threadID", thread.threadID);
 				discuss.settings.set("participantsID", thread.participantIDs);
@@ -113,18 +115,22 @@ export class FacebookProxy implements Proxy {
 				discuss.settings.set("lastMessageID", thread.lastMessageID);
 				// TODO : and so on
 				//discuss.owner = account.; TODO : add UserAccont.getOwner()
-				let contactAccount : OChatContactAccount = new OChatContactAccount();
-				contactAccount.protocol = "facebook";
-				this.findContactsnamesByID(thread.threadID).then((map) => {
-					contactAccount.contactName = map.get(thread.threadID);
-					discuss.participants.push(contactAccount);
-					if(!filter || (filter && filter(discuss))) {
-						discussions.push(discuss);
-					}
-				});
+				for(let recipientID: number of thread.participantIDs) {
+					let contactAccount : OChatContactAccount = new OChatContactAccount();
+					contactAccount.protocol = "facebook";
+					contactAccount.localID = recipientID;
+					this.api.getUserInfo(recipientID, (err, map) => {
+						if(!err) {
+							contactAccount.contactName = map.get(recipientID).name;
+							discuss.participants.push(contactAccount);
+							if(!filter || filter(discuss)) {
+								discussions.push(discuss);
+							}
+						}
+					});
+				}
 			}
 			return Promise.resolve(discussions);
-			// TODO : i think something will go wrong here
 		}
 
 		return Promise.reject(discussions);
@@ -132,17 +138,5 @@ export class FacebookProxy implements Proxy {
 
 	sendMessage(msg: Message, recipient: ContactAccount, callback?: (err: Error, succesM: Message) => any): void {
 		// TODO : what if we want to send it into a group conversation already formed ?
-	}
-
-	private findContactsnamesByID(ids: number[]): Promise<Map<number, string>> {
-		let map: Map<number, string> = new Map<number, string>();
-		// TODO
-		return Promise.resolve(map);
-	}
-
-	private findThreadByContactsNames(names: string[]): Promise<number> {
-		let id: number;
-		// TODO
-		return Promise.resolve(id);
 	}
 }
