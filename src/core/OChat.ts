@@ -12,6 +12,7 @@ import {MSG_FLAG_EDI} from "./interfaces";
 import {Connection} from "./interfaces";
 import {OChatEmitter} from "./interfaces";
 import {Listener} from "./interfaces";
+import {GroupAccount} from "./interfaces";
 
 export class OChatApp implements Client {
 	drivers: Proxy[] = [];  // All drivers supported by the app
@@ -91,7 +92,7 @@ export class OChatUser implements User {
 
 	accounts: UserAccount[] = [];
 
-	getOrCreateDiscussion(accounts: ContactAccount[]): Promise<Discussion> {
+	getOrCreateDiscussion(accounts: GroupAccount[]): Promise<Discussion> {
 		let discussion: Discussion; // The discussion we are looking for
 
 							// TODO : Oups, we have forgotten something.
@@ -300,7 +301,7 @@ export class OChatDiscussion implements Discussion {
 
 	description: string;
 
-	participants: ContactAccount[];
+	participants: GroupAccount[];
 
 	owner: User;
 
@@ -330,9 +331,9 @@ export class OChatDiscussion implements Discussion {
 		callback(err, msg);
 	}
 
-	addParticipants(p: ContactAccount[], callback?: (err: Error, succes: ContactAccount[]) => any): void {
+	addParticipants(p: GroupAccount[], callback?: (err: Error, succes: GroupAccount[]) => any): void {
 		let err: Error = null;
-		for(let part: ContactAccount of p) {
+		for(let part: GroupAccount of p) {
 			if(this.participants.indexOf(part) === -1) {
 				this.participants.push(part);
 			} else if (!err) {
@@ -345,7 +346,7 @@ export class OChatDiscussion implements Discussion {
 		}
 	}
 
-	getParticipants(): Promise<ContactAccount[]> {
+	getParticipants(): Promise<GroupAccount[]> {
 		return Promise.resolve(this.participants);
 	}
 
@@ -502,7 +503,7 @@ export class OChatUserAccount implements UserAccount {
 		return this.driver.createConnection(this);
 	}
 
-	sendMessageTo(recipients: ContactAccount[], msg: Message, callback?: (err: Error, succes: Message) => any): void {
+	sendMessageTo(recipients: GroupAccount, msg: Message, callback?: (err: Error, succes: Message) => any): void {
 		this.driver.sendMessage(msg, recipients, callback);
 	}
 
