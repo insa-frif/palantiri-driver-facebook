@@ -16,6 +16,7 @@ import {OChatConnection} from "../core/OChat";
 import {OChatContact} from "../core/OChat";
 import {OChatContactAccount} from "../core/OChat";
 import * as login from "facebook-chat-api";
+import {OChatDiscussion} from "../core/OChat";
 let readline = require('readline');
 
 // TODO : find a way to import types from manual typings
@@ -101,9 +102,50 @@ export class FacebookProxy implements Proxy {
 	}
 
 	getDiscussions(account: UserAccount, max?: number, filter?: (discuss: Discussion) => boolean): Promise<Discussion[]> {
-		return undefined;
+		let discussions: OChatDiscussion[] = [];
+
+		if(this.api && this.connection.connected) {
+			let threadsList: any[] = [];
+			this.api.getThreadList(0, max, (err, threads) => {
+				if (!err) {
+					threadsList = threads;
+				}
+			});
+			for(let thread: any of threadsList) {
+				let discuss: OChatDiscussion = new OChatDiscussion();
+				discuss.name = thread.name;
+				discuss.creationDate = null;
+				discuss.isPrivate = true;
+				discuss.description = thread.snippet; // TODO : is that was snippet is ?
+				discuss.settings = new Map<string, any>();
+				discuss.settings.set("threadID", thread.threadID);
+				discuss.settings.set("participantsID", thread.participantIDs);
+				discuss.settings.set("canReply", thread.canReply);
+				discuss.settings.set("blockedParticipants", thread.blockedParticipants);
+				discuss.settings.set("lastMessageID", thread.lastMessageID);
+				// TODO : and so on
+				//discuss.owner = account.; TODO : add UserAccont.getOwner()
+				let contactAccount : OChatContactAccount = new OChatContactAccount();
+				contactAccount.protocol = "facebook";
+				this.findContactsnamesByID(thread.threadID).then((map) => {
+					contactAccount.contactName = map.get(thread.threadID);
+					discuss.participants.push(contactAccount);
+					if(!filter || (filter && filter(discuss))) {
+						discussions.push(discuss);
+					}
+				});
+			}
+		}
+
+		return Promise.resolve(discussions);
 	}
 
 	sendMessage(msg: Message, recipient: ContactAccount, callback?: (err: Error, succesM: Message) => any): void {
+	}
+
+	private findContactsnamesByID(ids: number[]): Promise<Map<number, string>> {
+		let map: Map<number, string> = new Map<number, string>();
+		// TODO
+		return Promise.resolve(map);
 	}
 }
