@@ -483,6 +483,8 @@ export class OChatUserAccount implements UserAccount {
 
 	driver: Proxy;
 
+	connection: Connection;
+
 	data: Map<string, any>;
 
 	getContacts(): Promise<Contact[]> {
@@ -494,7 +496,10 @@ export class OChatUserAccount implements UserAccount {
 	}
 
 	getOrCreateConnection(): Promise<Connection> {
-		return this.driver.getOrCreateConnection(this);
+		if(this.connection && this.connection.connected) {
+			return Promise.resolve(this.connection);
+		}
+		return this.driver.createConnection(this);
 	}
 
 	sendMessageTo(recipient: ContactAccount, msg: Message, callback?: (err: Error, succes: Message) => any): void {
@@ -507,4 +512,6 @@ export class OChatContactAccount implements ContactAccount {
 	contactName: string;
 
 	protocol: string;
+
+	localID: number;
 }
