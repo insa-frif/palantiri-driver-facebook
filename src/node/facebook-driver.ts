@@ -17,6 +17,11 @@ import {OChatContact} from "../core/OChat";
 import {OChatContactAccount} from "../core/OChat";
 import * as login from "facebook-chat-api";
 import {OChatDiscussion} from "../core/OChat";
+import {MSG_FLAG_TXT} from "../core/interfaces";
+import {MSG_FLAG_EDI} from "../core/interfaces";
+import {MSG_FLAG_IMG} from "../core/interfaces";
+import {MSG_FLAG_FIL} from "../core/interfaces";
+import {MSG_FLAG_URL} from "../core/interfaces";
 let readline = require('readline');
 
 // TODO : find a way to import types from manual typings
@@ -136,7 +141,18 @@ export class FacebookProxy implements Proxy {
 		return Promise.reject(discussions);
 	}
 
-	sendMessage(msg: Message, recipient: ContactAccount, callback?: (err: Error, succesM: Message) => any): void {
-		// TODO : what if we want to send it into a group conversation already formed ?
+	sendMessage(msg: Message, recipients: ContactAccount[], callback?: (err: Error, succesM: Message) => any): void {
+		let message: any = undefined;
+		if(msg.flags === MSG_FLAG_TXT || msg.flags === (MSG_FLAG_TXT & MSG_FLAG_EDI)) {
+			message.type = "regular";
+		} else if ((msg.flags & MSG_FLAG_IMG) === MSG_FLAG_IMG) {
+			message.type = "image";
+		} else if ((msg.flags & MSG_FLAG_FIL) === MSG_FLAG_FIL) {
+			message.type = "file";
+		} else if ((msg.flags & MSG_FLAG_URL) === MSG_FLAG_IMG) {
+			message.type = "url";
+		}
+
+		message.id = 0;
 	}
 }

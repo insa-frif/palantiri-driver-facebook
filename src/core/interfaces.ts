@@ -406,8 +406,10 @@ export interface UserAccount {
 	//  Si la connexion n'existait pas, elle sera cree et directement accessible,
 	//  sauf erreur.
 
-	sendMessageTo(recipient: ContactAccount, msg: Message, callback?: (err: Error, succes: Message) => any): void;
-	//  Envoie le message "msg" au contact "recipient".
+	sendMessageTo(recipients: ContactAccount[], msg: Message, callback?: (err: Error, succes: Message) => any): void;
+	//  Envoie le message "msg" aux contacts "recipients"
+	//  dans UNE SEULE conversation, sauf si le protocole
+	//  ne supporte pas les groupes.
 	//  Si le message ne peut pas etre envoye, err sera non nul.
 }
 
