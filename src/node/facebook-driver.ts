@@ -29,7 +29,7 @@ export class FacebookProxy implements Proxy {
 	api: any;
 
 	isCompatibleWith(protocol: string): boolean {
-		return protocol === this.protocol;
+		return protocol.toLowerCase() === this.protocol.toLowerCase();
 	}
 
 	getOrCreateConnection(account: UserAccount): Promise<Connection> {
