@@ -141,11 +141,18 @@ export class FacebookProxy implements Proxy {
 	}
 
 	sendMessage(msg: Message, recipient: ContactAccount, callback?: (err: Error, succesM: Message) => any): void {
+		// TODO : what if we want to send it into a group conversation already formed ?
 	}
 
 	private findContactsnamesByID(ids: number[]): Promise<Map<number, string>> {
 		let map: Map<number, string> = new Map<number, string>();
 		// TODO
 		return Promise.resolve(map);
+	}
+
+	private findThreadByContactsNames(names: string[]): Promise<number> {
+		let id: number;
+		// TODO
+		return Promise.resolve(id);
 	}
 }
