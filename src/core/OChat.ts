@@ -516,3 +516,13 @@ export class OChatContactAccount implements ContactAccount {
 
 	localID: number;
 }
+
+export class OChatGroupAccount implements GroupAccount {
+	protocol: string;
+
+	members: ContactAccount[];
+
+	addMembers(members: ContactAccount | ContactAccount[], callback?: (err: Error, members: ContactAccount[]) => any): void {
+	}
+
+}
