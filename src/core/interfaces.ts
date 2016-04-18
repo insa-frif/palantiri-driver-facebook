@@ -87,11 +87,11 @@ export interface Proxy {
 	//  Si filter est precise, ne retourne dans le tableau que les discussions
 	//  pour lesquelles la fonction "filter" retourne true.
 
-  sendMessage(msg: Message, recipients: ContactAccount[], callback?: (err: Error, succesM: Message) => any): void;
+  sendMessage(msg: Message, recipients: GroupAccount, callback?: (err: Error, succesM: Message) => any): void;
 	//  Envoie le message "msg" aux destinataires "recipients".
 	//  Il est a noter que le message sera envoye dans UNE SEULE
 	//  conversation, sauf si le protocole ne supporte pas les groupes.
-	//  Si elle n'existe pas, elle sera cree.
+	//  Si la conversation n'existe pas, elle sera cree.
 	//  Si le message ne peut pas etre envoye, err sera non nul.
 
 }
@@ -186,12 +186,12 @@ export interface User {
 
 	username: string;         //  Le nom complet de l'utilisateur
 
-  getOrCreateDiscussion(accounts: ContactAccount[]) : Promise<Discussion>;
+  getOrCreateDiscussion(accounts: GroupAccount[]) : Promise<Discussion>;
   //  Permet de commencer une discussion avec un contact,
 	//  ou de recuperer une discussion existante.
   //  C'est le seul moyen de communiquer avec quelqu'un.
   //  En cas de création, garanti que l'initiateur de la
-	//  conversation est présent en tant que participant.
+	//  conversation est present en tant que participant.
 
   leaveDiscussion(discussion: Discussion, callback?: (err: Error, succes: Discussion) => any): void;
 	//  Permet de quitter la discussion "discussion" et de ne plus
@@ -252,7 +252,7 @@ export interface Discussion {
 
   isPrivate: boolean;             // Privacite de la conversation
 
-	participants: ContactAccount[]; // Liste des participants a la conversation.
+	participants: GroupAccount[];   // Liste des participants a la conversation.
 																	// L'utilisateur n'en fait pas partie.
 
 	owner: User;                    // L'utilisateur d'Omni-Chat qui utilise
@@ -274,10 +274,12 @@ export interface Discussion {
   //  Envoie le message "msg" a tous les participants de la discussion.
   //  Cette methode fait appel au proxy pour chaque Account de "participants".
 
-  addParticipants(p: ContactAccount[], callback?: (err: Error, succes: ContactAccount[]) => any): void;
-  //  Ajoute des participants a la conversation
+  addParticipants(p: GroupAccount[], callback?: (err: Error, succes: GroupAccount[]) => any): void;
+  //  Ajoute des participants a la conversation.
+	//  Ces participants peuvent aussi bien etre des groupes
+	//  (deja existants ou non) que des personnes seules.
 
-  getParticipants(): Promise<ContactAccount[]>;
+  getParticipants(): Promise<GroupAccount[]>;
   //  Retourne une liste des participants a la conversation.
 
   onMessage(callback: (msg: Message) => any): Promise<Discussion>;
@@ -406,7 +408,7 @@ export interface UserAccount {
 	//  Si la connexion n'existait pas, elle sera cree et directement accessible,
 	//  sauf erreur.
 
-	sendMessageTo(recipients: ContactAccount[], msg: Message, callback?: (err: Error, succes: Message) => any): void;
+	sendMessageTo(recipients: GroupAccount, msg: Message, callback?: (err: Error, succes: Message) => any): void;
 	//  Envoie le message "msg" aux contacts "recipients"
 	//  dans UNE SEULE conversation, sauf si le protocole
 	//  ne supporte pas les groupes.

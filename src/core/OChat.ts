@@ -502,8 +502,8 @@ export class OChatUserAccount implements UserAccount {
 		return this.driver.createConnection(this);
 	}
 
-	sendMessageTo(recipient: ContactAccount, msg: Message, callback?: (err: Error, succes: Message) => any): void {
-		this.driver.sendMessage(msg, recipient, callback);
+	sendMessageTo(recipients: ContactAccount[], msg: Message, callback?: (err: Error, succes: Message) => any): void {
+		this.driver.sendMessage(msg, recipients, callback);
 	}
 
 }
