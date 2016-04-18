@@ -4,26 +4,28 @@
 
 import {Client} from "../core/interfaces";
 import {Proxy} from "../core/interfaces";
-import {User} from "../core/interfaces";
 import {Contact} from "../core/interfaces";
 import {Discussion} from "../core/interfaces";
 import {UserAccount} from "../core/interfaces";
 import {ContactAccount} from "../core/interfaces";
 import {Message} from "../core/interfaces";
-import {MSG_FLAG_EDI} from "../core/interfaces"
 import {Connection} from "../core/interfaces";
 import {OChatEmitter} from "../core/interfaces";
 import {Listener} from "../core/interfaces";
 import {OChatConnection} from "../core/OChat";
+import {OChatContact} from "../core/OChat";
+import {OChatContactAccount} from "../core/OChat";
 import * as login from "facebook-chat-api";
 let readline = require('readline');
 
-class FacebookProxy implements Proxy {
+// TODO : find a way to import types from manual typings
+
+export class FacebookProxy implements Proxy {
 	protocol: string;
 
 	connection: Connection;
 
-	api: any; // TODO : find a way to import types from manual typings
+	api: any;
 
 	isCompatibleWith(protocol: string): boolean {
 		return protocol === this.protocol;
@@ -73,7 +75,29 @@ class FacebookProxy implements Proxy {
 	}
 
 	getContacts(account: UserAccount): Promise<Contact[]> {
-		return undefined;
+		// TODO : the parameter seems useless
+		let contacts: OChatContact[] = [];
+
+		if(this.api && this.connection.connected) {
+			let friends: any[] = [];
+			this.api.getFriendsList((err, people) => {
+				if(!err) {
+					friends = people;
+				}
+			});
+			for(let friend: any of friends) {
+				let contact = new OChatContact();
+				contact.fullname = friend.fullName;
+				contact.nicknames.push(friend.fullName);
+				let contactAccount: OChatContactAccount = new OChatContactAccount();
+				contactAccount.protocol = "facebook";
+				contactAccount.contactName = friend.fullName;
+				contact.accounts.push(contactAccount);
+				contacts.push(contact);
+			}
+		}
+
+		return Promise.resolve(contacts);
 	}
 
 	getDiscussions(account: UserAccount, max?: number, filter?: (discuss: Discussion) => boolean): Promise<Discussion[]> {
