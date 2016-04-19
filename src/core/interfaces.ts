@@ -463,12 +463,12 @@ export interface GroupAccount {
 }
 
 /***************************************************************
- * OChatEmitter is the object that send Events to Connections.
+ * Emitter is the object that send Events to Connections.
  * You can handle any sort of Events by using .on().
  * You can send any Event by using .emit(). Events for which
  * there is no known handler will be ignored.
  ***************************************************************/
-export interface OChatEmitter extends EventEmitter {
+export interface Emitter extends EventEmitter {
 	// Empty for the moment
 }
 
@@ -492,7 +492,7 @@ export interface Listener {
  * connection to do.
  ***************************************************************/
 export interface Connection {
-	emitter: OChatEmitter;  //  The emitter for this connection.
+	emitter: Emitter;  //  The emitter for this connection.
 
 	connected: boolean;     //  The actual state of this connection.
 													//  If it's already connected, it's true,
