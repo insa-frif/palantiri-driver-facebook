@@ -393,6 +393,8 @@ export interface UserAccount {
 													//  Permet aux implementations de travailler avec
 													//  plus de details.
 
+	owner: User;            //  Le proprietaire du compte.
+
 	getContacts(): Promise<Contact[]>;
 	//  Accede a la liste des contacts du compte courant,
 	//  et les retourne sous forme de tableau de contacts.
@@ -402,6 +404,9 @@ export interface UserAccount {
 	//  et retourne jusqu'a "max" Discussions dans un tableau.
 	//  Si filter est precise, ne retourne dans le tableau que les discussions
 	//  pour lesquelles la fonction "filter" retourne true.
+
+	getOwner(): Promise<User>;
+	//  Retourne l'utilisateur proprietaire du compte.
 
 	getOrCreateConnection(): Promise<Connection>;
 	//  Connecte le compte courant, ou recupere la connexion existante.
