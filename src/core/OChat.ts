@@ -29,7 +29,7 @@ export class OChatApp implements Client {
 
 	addDriver(driver: Proxy, callback?: (err: Error, drivers: Proxy[]) => any): OChatApp {
 		let err: Error = null;
-		for(let prox: Proxy of this.drivers) {
+		for(let prox of this.drivers) {
 			if(prox.isCompatibleWith(driver.protocol)) {
 				err = new Error("This app already has a compatible protocol");
 			}
@@ -121,14 +121,14 @@ export class OChatUser implements User {
 		//        -improve how we check if ContactAccount are the same Contact
 		//        -check in base if the user specified some time ago that some accounts are the same
 		let contacts: Contact[] = null;
-		for(let account: UserAccount of this.accounts) {
+		for(let account of this.accounts) {
 			account.getContacts().then((someContacts) => {
 				if(!contacts) {
 					contacts = someContacts;
 				} else {
-					for(let otherContact: Contact of someContacts) {
+					for(let otherContact of someContacts) {
 						let merge: boolean = false;
-						for(let actualContact: Contact of contacts) {
+						for(let actualContact of contacts) {
 							if(otherContact.fullname === actualContact.fullname) {
 								actualContact.mergeContacts(otherContact);
 								merge = true;
@@ -223,7 +223,7 @@ export class OChatContact implements Contact {
 	mergeContacts(contact: Contact, callback?: (err: Error, succes: Contact) => any): Contact {
 		let error: Error = null;
 		let numberOfErrors: number = 0;
-		for(let contactAccount: ContactAccount of contact.accounts) {
+		for(let contactAccount of contact.accounts) {
 			this.addAccount(contactAccount, (err, acc) => {
 				if(err) {
 					numberOfErrors++;
@@ -243,7 +243,7 @@ export class OChatContact implements Contact {
 
 	unmergeContacts(contact: Contact, callback?: (err: Error, succes: Contact) => any): Contact {
 		let error: Error = null;
-		for(let contactAccount: ContactAccount of contact.accounts) {
+		for(let contactAccount of contact.accounts) {
 			this.removeAccount(contactAccount, (err, acc) => {
 				if(err) {
 					error = new Error("Unable to unmerge contact. One account in the parameters is not part of the current Contact.");
@@ -333,7 +333,7 @@ export class OChatDiscussion implements Discussion {
 
 	addParticipants(p: GroupAccount[], callback?: (err: Error, succes: GroupAccount[]) => any): void {
 		let err: Error = null;
-		for(let part: GroupAccount of p) {
+		for(let part of p) {
 			if(this.participants.indexOf(part) === -1) {
 				this.participants.push(part);
 			} else if (!err) {
@@ -420,7 +420,7 @@ export class OChatConnection implements Connection {
 	getAllEventListeners(event?: string): Promise<Listener[]> {
 		if(event) {
 			let wantedListeners: Listener[] = [];
-			for(let listener: Listener of this.listeners) {
+			for(let listener of this.listeners) {
 				if(listener.event === event) {
 					wantedListeners.push(listener);
 				}
@@ -456,8 +456,8 @@ export class OChatConnection implements Connection {
 		let err: Error = null;
 		let originalLength: number = this.listeners.length;
 		if(eventNames) {
-			for(let name: string of eventNames) {
-				for(let listener: Listener of this.listeners) {
+			for(let name of eventNames) {
+				for(let listener of this.listeners) {
 					if(listener.event === name) {
 						this.listeners.splice(0, 1, listener);
 					}
@@ -523,6 +523,7 @@ export class OChatGroupAccount implements GroupAccount {
 	members: ContactAccount[];
 
 	addMembers(members: ContactAccount | ContactAccount[], callback?: (err: Error, members: ContactAccount[]) => any): void {
+		// TODO
 	}
 
 }
