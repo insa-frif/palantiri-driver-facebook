@@ -23,6 +23,7 @@ import {MSG_FLAG_FIL} from "../core/interfaces";
 import {MSG_FLAG_URL} from "../core/interfaces";
 import * as login from "facebook-chat-api";
 import {EventEmitter} from "events";
+import {OChatGroupAccount} from "../core/OChat";
 let readline = require('readline');
 
 // TODO : find a way to import types from manual typings
@@ -122,7 +123,7 @@ export class FacebookProxy implements Proxy {
 				account.getOwner().then((owner) => {
 					discuss.owner = owner;
 				})
-				let groupAccount: GroupAccount = new GroupAccount();
+				let groupAccount: OChatGroupAccount = new OChatGroupAccount();
 				groupAccount.protocol = "facebook";
 				groupAccount.localDiscussionID = thread.threadID;
 				for(let recipientID of thread.participantIDs) {
