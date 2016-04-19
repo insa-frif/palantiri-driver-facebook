@@ -120,6 +120,9 @@ export class FacebookProxy implements Proxy {
 				discuss.settings.set("lastMessageID", thread.lastMessageID);
 				// TODO : and so on
 				//discuss.owner = account.; TODO : add UserAccont.getOwner()
+				let groupAccount: GroupAccount = new GroupAccount();
+				groupAccount.protocol = "facebook";
+				groupAccount.localDiscussionID = thread.threadID;
 				for(let recipientID of thread.participantIDs) {
 					let contactAccount : OChatContactAccount = new OChatContactAccount();
 					contactAccount.protocol = "facebook";
@@ -127,15 +130,13 @@ export class FacebookProxy implements Proxy {
 					this.api.getUserInfo(recipientID, (err, map) => {
 						if(!err) {
 							contactAccount.contactName = map.get(recipientID).name;
-							let groupAccount: GroupAccount = new GroupAccount();
-							groupAccount.protocol = "facebook";
 							groupAccount.addMembers(contactAccount);
-							discuss.participants.push(groupAccount);
-							if(!filter || filter(discuss)) {
-								discussions.push(discuss);
-							}
 						}
 					});
+				}
+				discuss.participants.push(groupAccount);
+				if(!filter || filter(discuss)) {
+					discussions.push(discuss);
 				}
 			}
 		}
