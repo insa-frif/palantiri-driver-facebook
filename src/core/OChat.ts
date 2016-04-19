@@ -107,7 +107,7 @@ export class OChatUser implements User {
 		return Promise.resolve(discussion);
 	}
 
-	leaveDiscussion(discussion: Discussion, callback?: (err: Error, succes: Discussion)=>any): void {
+	leaveDiscussion(discussion: Discussion, callback?: (err: Error, succes: Discussion) => any): void {
 
 	}
 
