@@ -451,6 +451,10 @@ export interface GroupAccount {
 	members: ContactAccount[];  //  La liste de tous les membres du
 															//  groupe de discussion.
 
+	localDiscussionID: number;  //  L'identifiant de la conversation,
+															//  s'il existe. Depend directement
+															//  de la base et donc du protocole utilise.
+
 	addMembers(members: ContactAccount | ContactAccount[], callback?: (err: Error, members: ContactAccount[]) => any): void;
 	//  Add all the ContactAccounts "members" to the list of
 	//  known members.

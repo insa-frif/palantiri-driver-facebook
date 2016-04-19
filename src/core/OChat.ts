@@ -522,6 +522,8 @@ export class OChatGroupAccount implements GroupAccount {
 
 	members: ContactAccount[];
 
+	localDiscussionID: number;
+
 	addMembers(members: ContactAccount | ContactAccount[], callback?: (err: Error, members: ContactAccount[]) => any): void {
 		// TODO
 	}
