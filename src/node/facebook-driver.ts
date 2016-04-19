@@ -24,6 +24,7 @@ import {MSG_FLAG_URL} from "../core/interfaces";
 import * as login from "facebook-chat-api";
 import {EventEmitter} from "events";
 import {OChatGroupAccount} from "../core/OChat";
+import {MSG_FLAG_VID} from "../core/interfaces";
 let readline = require('readline');
 
 // TODO : find a way to import types from manual typings
@@ -153,12 +154,42 @@ export class FacebookProxy implements Proxy {
 			message.type = "regular";
 		} else if ((msg.flags & MSG_FLAG_IMG) === MSG_FLAG_IMG) {
 			message.type = "image";
-		} else if ((msg.flags & MSG_FLAG_FIL) === MSG_FLAG_FIL) {
+		} else if ((msg.flags & MSG_FLAG_FIL) === MSG_FLAG_FIL || (msg.flags & MSG_FLAG_VID) === MSG_FLAG_VID) {
 			message.type = "file";
 		} else if ((msg.flags & MSG_FLAG_URL) === MSG_FLAG_IMG) {
 			message.type = "url";
 		}
 
-		message.id = 0;
+		// TODO : manage attachments with streams
+
+		message.body = msg.body;
+
+		let error: Error = null;
+		if(recipients.localDiscussionID) {
+			this.api.sendMessage(message, recipients.localDiscussionID, (err, info) => {
+				if(err) {
+					error = err;
+				}
+				if(callback) {
+					callback(err, message);
+				}
+			});
+		} else {
+			let ids: number[] = [];
+			for(let recipAccount of recipients.members) {
+				ids.push(recipAccount.localID);
+			}
+			this.api.sendMessage(message, ids, (err, info) => {
+				if(err) {
+					error = err;
+				} else {
+					//recipients.localDiscussionID = info.threadID;
+					// TODO : faire en sorte que le compilo et l'IDE comprennent que ça vient de manual_typings
+				}
+				if(callback) {
+					callback(err, message);
+				}
+			});
+		}
 	}
 }
