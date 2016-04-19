@@ -463,16 +463,6 @@ export interface GroupAccount {
 }
 
 /***************************************************************
- * Emitter is the object that send Events to Connections.
- * You can handle any sort of Events by using .on().
- * You can send any Event by using .emit(). Events for which
- * there is no known handler will be ignored.
- ***************************************************************/
-export interface Emitter extends EventEmitter {
-	// Empty for the moment
-}
-
-/***************************************************************
  * Listener represent a function attached to an Event.
  * When the event is triggered, the associated handler is fired.
  * This is just a structure wich helps us to manage events.
@@ -492,7 +482,7 @@ export interface Listener {
  * connection to do.
  ***************************************************************/
 export interface Connection {
-	emitter: Emitter;  //  The emitter for this connection.
+	emitter: EventEmitter;  //  The emitter for this connection.
 
 	connected: boolean;     //  The actual state of this connection.
 													//  If it's already connected, it's true,
