@@ -488,12 +488,18 @@ export class OChatUserAccount implements UserAccount {
 
 	data: Map<string, any>;
 
+	owner: User;
+
 	getContacts(): Promise<Contact[]> {
 		return this.driver.getContacts(this);
 	}
 
 	getDiscussions(max?: number, filter?: (discuss: Discussion) => boolean): Promise<Discussion[]> {
 		return this.driver.getDiscussions(this, max, filter);
+	}
+
+	getOwner(): Promise<User> {
+		return Promise.resolve(this.owner);
 	}
 
 	getOrCreateConnection(): Promise<Connection> {
@@ -507,6 +513,9 @@ export class OChatUserAccount implements UserAccount {
 		this.driver.sendMessage(msg, recipients, callback);
 	}
 
+	constructor(owner: User) {
+		this.owner = owner;
+	}
 }
 
 export class OChatContactAccount implements ContactAccount {
