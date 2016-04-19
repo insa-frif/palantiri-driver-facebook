@@ -8,20 +8,21 @@ import {Contact} from "../core/interfaces";
 import {Discussion} from "../core/interfaces";
 import {UserAccount} from "../core/interfaces";
 import {ContactAccount} from "../core/interfaces";
+import {GroupAccount} from "../core/interfaces";
 import {Message} from "../core/interfaces";
 import {Connection} from "../core/interfaces";
-import {OChatEmitter} from "../core/interfaces";
 import {Listener} from "../core/interfaces";
 import {OChatConnection} from "../core/OChat";
 import {OChatContact} from "../core/OChat";
 import {OChatContactAccount} from "../core/OChat";
-import * as login from "facebook-chat-api";
 import {OChatDiscussion} from "../core/OChat";
 import {MSG_FLAG_TXT} from "../core/interfaces";
 import {MSG_FLAG_EDI} from "../core/interfaces";
 import {MSG_FLAG_IMG} from "../core/interfaces";
 import {MSG_FLAG_FIL} from "../core/interfaces";
 import {MSG_FLAG_URL} from "../core/interfaces";
+import * as login from "facebook-chat-api";
+import {EventEmitter} from "events";
 let readline = require('readline');
 
 // TODO : find a way to import types from manual typings
@@ -38,7 +39,7 @@ export class FacebookProxy implements Proxy {
 	createConnection(account: UserAccount): Promise<Connection> {
 		let connection: Connection = new OChatConnection();
 		connection.connected = false;
-		connection.emitter = new OChatEmitter();
+		connection.emitter = new EventEmitter();
 		connection.listeners = [];
 		let facebookApi: any = null;
 
@@ -78,7 +79,7 @@ export class FacebookProxy implements Proxy {
 					friends = people;
 				}
 			});
-			for(let friend: any of friends) {
+			for(let friend of friends) {
 				let contact = new OChatContact();
 				contact.fullname = friend.fullName;
 				contact.nicknames.push(friend.fullName);
@@ -89,10 +90,9 @@ export class FacebookProxy implements Proxy {
 				contact.accounts.push(contactAccount);
 				contacts.push(contact);
 			}
-			return Promise.resolve(contacts);
 		}
 
-		return Promise.reject(contacts);
+		return Promise.resolve(contacts);
 	}
 
 	getDiscussions(account: UserAccount, max?: number, filter?: (discuss: Discussion) => boolean): Promise<Discussion[]> {
@@ -105,7 +105,7 @@ export class FacebookProxy implements Proxy {
 					threadsList = threads;
 				}
 			});
-			for(let thread: any of threadsList) {
+			for(let thread of threadsList) {
 				let discuss: OChatDiscussion = new OChatDiscussion();
 				discuss.name = thread.name;
 				discuss.creationDate = null;
@@ -120,14 +120,17 @@ export class FacebookProxy implements Proxy {
 				discuss.settings.set("lastMessageID", thread.lastMessageID);
 				// TODO : and so on
 				//discuss.owner = account.; TODO : add UserAccont.getOwner()
-				for(let recipientID: number of thread.participantIDs) {
+				for(let recipientID of thread.participantIDs) {
 					let contactAccount : OChatContactAccount = new OChatContactAccount();
 					contactAccount.protocol = "facebook";
 					contactAccount.localID = recipientID;
 					this.api.getUserInfo(recipientID, (err, map) => {
 						if(!err) {
 							contactAccount.contactName = map.get(recipientID).name;
-							discuss.participants.push(contactAccount);
+							let groupAccount: GroupAccount = new GroupAccount();
+							groupAccount.protocol = "facebook";
+							groupAccount.addMembers(contactAccount);
+							discuss.participants.push(groupAccount);
 							if(!filter || filter(discuss)) {
 								discussions.push(discuss);
 							}
@@ -135,13 +138,12 @@ export class FacebookProxy implements Proxy {
 					});
 				}
 			}
-			return Promise.resolve(discussions);
 		}
 
-		return Promise.reject(discussions);
+		return Promise.resolve(discussions);
 	}
 
-	sendMessage(msg: Message, recipients: ContactAccount[], callback?: (err: Error, succesM: Message) => any): void {
+	sendMessage(msg: Message, recipients: GroupAccount, callback?: (err: Error, succesM: Message) => any): void {
 		let message: any = undefined;
 		if(msg.flags === MSG_FLAG_TXT || msg.flags === (MSG_FLAG_TXT & MSG_FLAG_EDI)) {
 			message.type = "regular";
