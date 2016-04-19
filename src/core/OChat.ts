@@ -10,9 +10,9 @@ import {ContactAccount} from "./interfaces";
 import {Message} from "./interfaces";
 import {MSG_FLAG_EDI} from "./interfaces";
 import {Connection} from "./interfaces";
-import {OChatEmitter} from "./interfaces";
 import {Listener} from "./interfaces";
 import {GroupAccount} from "./interfaces";
+import {EventEmitter} from 'events';
 
 export class OChatApp implements Client {
 	drivers: Proxy[] = [];  // All drivers supported by the app
@@ -411,7 +411,7 @@ export class OChatMessage implements Message {
 }
 
 export class OChatConnection implements Connection {
-	emitter: OChatEmitter;
+	emitter: EventEmitter;
 
 	connected: boolean;
 
