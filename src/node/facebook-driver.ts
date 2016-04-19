@@ -119,7 +119,9 @@ export class FacebookProxy implements Proxy {
 				discuss.settings.set("blockedParticipants", thread.blockedParticipants);
 				discuss.settings.set("lastMessageID", thread.lastMessageID);
 				// TODO : and so on
-				//discuss.owner = account.; TODO : add UserAccont.getOwner()
+				account.getOwner().then((owner) => {
+					discuss.owner = owner;
+				})
 				let groupAccount: GroupAccount = new GroupAccount();
 				groupAccount.protocol = "facebook";
 				groupAccount.localDiscussionID = thread.threadID;
