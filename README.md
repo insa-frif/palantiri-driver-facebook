@@ -1,4 +1,4 @@
-# Omni-chat driver : Facebook #
+# Palantiri driver : Facebook #
 
 Build with:
 

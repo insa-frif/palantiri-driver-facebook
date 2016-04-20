@@ -1,5 +1,5 @@
 {
-  "name": "ochat-driver-facebook",
+  "name": "palantiri-driver-facebook",
   "version": "1.6.0",
   "description": "Omni chat client",
   "main": "dist/node/node/main.js",
