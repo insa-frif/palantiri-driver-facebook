@@ -1,3 +1,7 @@
+# NPM SPECIFIC #
+dist
+# END OF NPM SPECIFIC #
+
 ### Dependencies ###
 # Node dependencies directory
 node_modules
