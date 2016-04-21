@@ -5,8 +5,8 @@ import * as Bluebird from "bluebird";
 import {ConnectedApi} from "palantiri-interfaces";
 import {UserAccount} from "palantiri-interfaces";
 import {ContactAccount} from "palantiri";
-import {GroupAccount} from "palantiri-interfaces";
-import {Discussion} from "palantiri-interfaces";
+import {GroupAccount} from "palantiri";
+import {Discussion} from "palantiri";
 import {Message} from "palantiri-interfaces";
 
 export class FacebookConnectedApi implements ConnectedApi {
@@ -40,7 +40,57 @@ export class FacebookConnectedApi implements ConnectedApi {
   }
 
   getDiscussions(account: UserAccount, max?: number, filter?: (discuss: Discussion) => boolean): Bluebird.Thenable<Discussion[]> {
-    return undefined;
+    let discussions: Discussion[] = [];
+
+		if(this.facebookApi) {
+			let threadsList: any[] = [];
+			this.facebookApi.getThreadList(0, max, (err, threads) => {
+				if (!err) {
+					threadsList = threads;
+				}
+			});
+			for(let thread of threadsList) {
+				let discuss: Discussion = new Discussion();
+				discuss.name = thread.name;
+				discuss.creationDate = null;
+				discuss.isPrivate = true;
+				discuss.description = thread.snippet; // TODO : is that was snippet is ?
+				discuss.participants = [];
+				discuss.settings = new Map<string, any>();
+				// discuss.settings.set("threadID", thread.threadID);
+				// discuss.settings.set("participantsID", thread.participantIDs);
+				// discuss.settings.set("canReply", thread.canReply);
+				// discuss.settings.set("blockedParticipants", thread.blockedParticipants);
+				// discuss.settings.set("lastMessageID", thread.lastMessageID);
+        // TODO : implement method set in dictionnary
+				// TODO : and so on
+				// account.getOwner().then((owner) => {
+				// 	discuss.owner = owner;
+				// });
+        // TODO : find a way to find the owner
+				let groupAccount: GroupAccount = new GroupAccount();
+				groupAccount.protocol = "facebook";
+				groupAccount.localDiscussionID = thread.threadID;
+				for(let recipientID of thread.participantIDs) {
+					let contactAccount : ContactAccount = new ContactAccount();
+					contactAccount.protocol = "facebook";
+					contactAccount.localID = recipientID;
+					this.facebookApi.getUserInfo(recipientID, (err, map) => {
+						if(!err) {
+							contactAccount.contactName = map[recipientID].name;
+              let member: ContactAccount[] = [contactAccount];
+							groupAccount.addMembers(member);
+						}
+					});
+				}
+				discuss.participants.push(groupAccount);
+				if(!filter || filter(discuss)) {
+					discussions.push(discuss);
+				}
+			}
+		}
+    
+    return Bluebird.resolve(discussions);
   }
 
   addMembersToGroupChat(members: ContactAccount[], groupChat: GroupAccount, callback?: (err: Error) => any): Bluebird.Thenable<ConnectedApi> {
