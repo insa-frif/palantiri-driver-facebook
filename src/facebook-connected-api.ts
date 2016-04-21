@@ -4,7 +4,7 @@ import * as facebookApi from "facebook-chat-api";
 import * as Bluebird from "bluebird";
 import {ConnectedApi} from "palantiri-interfaces";
 import {UserAccount} from "palantiri-interfaces";
-import {ContactAccount} from "palantiri-interfaces";
+import {ContactAccount} from "palantiri";
 import {GroupAccount} from "palantiri-interfaces";
 import {Discussion} from "palantiri-interfaces";
 import {Message} from "palantiri-interfaces";
@@ -19,7 +19,24 @@ export class FacebookConnectedApi implements ConnectedApi {
   }
 
   getContacts(account: UserAccount): Bluebird.Thenable<ContactAccount[]> {
-    return undefined;
+		let contacts: ContactAccount[] = [];
+
+		if(this.facebookApi) {
+			let friends: any[] = [];
+			this.facebookApi.getFriendsList((err, people) => {
+				if(!err) {
+					friends = people;
+				}
+			});
+			for(let friend of friends) {
+				let contactAccount: ContactAccount = new ContactAccount();
+				contactAccount.protocol = "facebook";
+				contactAccount.contactName = friend.fullName;
+				contactAccount.localID = friend.userID;
+				contacts.push(contactAccount);
+			}
+		}
+    return Bluebird.resolve(contacts);
   }
 
   getDiscussions(account: UserAccount, max?: number, filter?: (discuss: Discussion) => boolean): Bluebird.Thenable<Discussion[]> {
