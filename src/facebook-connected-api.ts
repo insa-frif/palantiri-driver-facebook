@@ -89,12 +89,27 @@ export class FacebookConnectedApi implements ConnectedApi {
 				}
 			}
 		}
-    
+
     return Bluebird.resolve(discussions);
   }
 
   addMembersToGroupChat(members: ContactAccount[], groupChat: GroupAccount, callback?: (err: Error) => any): Bluebird.Thenable<ConnectedApi> {
-    return undefined;
+    let err: Error = null;
+    for(let member of members) {
+      if(member.protocol.toLowerCase() === groupChat.protocol.toLowerCase() && member.localID && groupChat.localDiscussionID) {
+        this.facebookApi.addUserToGroup(member.localID, groupChat.localDiscussionID, (error) => {
+          if(!err) {
+            err = error;
+          }
+        });
+      } else if (!err) {
+        err = new Error("At least one of the participants could not be added.");
+      }
+    }
+    if(callback) {
+      callback(err);
+    }
+    return Bluebird.resolve(this);
   }
 
   removeMembersFromGroupChat(members: ContactAccount[], groupChat: GroupAccount, callback?: (err: Error) => any): Bluebird.Thenable<ConnectedApi> {
