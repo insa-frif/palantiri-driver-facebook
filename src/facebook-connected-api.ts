@@ -1,7 +1,6 @@
 import {EventEmitter} from "events";
-import * as readline from "readline";
 
-import * as login from "facebook-chat-api";
+import * as facebookApi from "facebook-chat-api";
 import * as Bluebird from "bluebird";
 import {ConnectedApi} from "palantiri-interfaces";
 import {UserAccount} from "palantiri-interfaces";
@@ -14,6 +13,8 @@ import {Message} from "palantiri-interfaces";
 
 export class FacebookConnectedApi implements ConnectedApi {
   protocol: string;
+
+  facebookApi: facebookApi.Api;
 
   isCompatibleWith(protocol:string): boolean {
     return undefined;
