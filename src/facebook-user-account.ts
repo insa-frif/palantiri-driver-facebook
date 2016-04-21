@@ -17,6 +17,5 @@ export class FacebookUserAccount extends UserAccount {
     }
     this.connection.connect(this);
     return Bluebird.resolve(this.connection);
-    // TODO : heu, mon retour est bon ?
   }
 }
