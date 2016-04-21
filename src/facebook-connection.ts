@@ -16,7 +16,7 @@ export class FacebookConnection extends EventEmitter implements Connection {
     return undefined;
   }
 
-  disconnect(): Bluebird.Thenable<Connection> {
+  disconnect(): Bluebird.Thenable<FacebookConnection> {
     return undefined;
   }
 
