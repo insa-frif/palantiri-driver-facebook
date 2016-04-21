@@ -37,6 +37,6 @@
     "facebook-chat-api": "^1.0.8",
     "lodash": "^4.0.0",
     "palantiri": "^0.1.0",
-    "palantiri-interfaces": "^0.1.2"
+    "palantiri-interfaces": "^0.1.1"
   }
 }
