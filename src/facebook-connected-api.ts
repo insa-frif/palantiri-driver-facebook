@@ -9,15 +9,13 @@ import {GroupAccount} from "palantiri-interfaces";
 import {Discussion} from "palantiri-interfaces";
 import {Message} from "palantiri-interfaces";
 
-//let MessageFlags = interfaces.MessageFlags;
-
 export class FacebookConnectedApi implements ConnectedApi {
   protocol: string;
 
   facebookApi: facebookApi.Api;
 
-  isCompatibleWith(protocol:string): boolean {
-    return undefined;
+  isCompatibleWith(protocol: string): boolean {
+    return this.protocol.toLowerCase() === protocol.toLowerCase();
   }
 
   getContacts(account: UserAccount): Bluebird.Thenable<ContactAccount[]> {
