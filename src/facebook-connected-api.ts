@@ -5,8 +5,10 @@ import * as login from "facebook-chat-api";
 import * as Bluebird from "bluebird";
 import {ConnectedApi} from "palantiri-interfaces";
 import {UserAccount} from "palantiri-interfaces";
+import {ContactAccount} from "palantiri-interfaces";
+import {GroupAccount} from "palantiri-interfaces";
+import {Discussion} from "palantiri-interfaces";
 import {Message} from "palantiri-interfaces";
-import {App, Contact, ContactAccount, Discussion, GroupAccount} from "palantiri";
 
 //let MessageFlags = interfaces.MessageFlags;
 
@@ -24,7 +26,8 @@ export class FacebookConnectedApi implements ConnectedApi {
   getDiscussions(account: UserAccount, max?: number, filter?: (discuss: Discussion) => boolean): Bluebird.Thenable<Discussion[]> {
     return undefined;
   }
-  addMembersToGroupChat(members:ContactAccount[], groupChat:GroupAccount, callback?: (err: Error) => any): Bluebird.Thenable<ConnectedApi> {
+
+  addMembersToGroupChat(members: ContactAccount[], groupChat: GroupAccount, callback?: (err: Error) => any): Bluebird.Thenable<ConnectedApi> {
     return undefined;
   }
 
