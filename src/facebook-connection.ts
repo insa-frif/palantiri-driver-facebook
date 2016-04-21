@@ -72,7 +72,7 @@ export class FacebookConnection extends EventEmitter implements Connection {
   }
 
   getConnectedApi(): Bluebird.Thenable<FacebookConnectedApi> {
-    return undefined;
+    return Bluebird.resolve(this.connectedApi);
   }
 
 }
