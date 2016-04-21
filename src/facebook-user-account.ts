@@ -7,7 +7,15 @@ import {FacebookConnection} from "./facebook-connection";
 
 export class FacebookUserAccount extends UserAccount {
   getOrCreateConnection(): Bluebird<FacebookConnection> {
-    return undefined;
+    if(this.connection) {
+      if(this.connection.connected) {
+        return Bluebird.resolve(this.connection);
+      }
+    } else {
+      this.connection = new FacebookConnection();
+    }
+    this.connection.connect(this);
+    return Bluebird.resolve(this.connection);
+    // TODO : heu, mon retour est bon ?
   }
-
 }
