@@ -2,12 +2,45 @@ import {EventEmitter} from "events";
 import * as readline from "readline";
 
 import * as login from "facebook-chat-api";
-import * as interfaces from "palantiri-interfaces";
+import * as Bluebird from "bluebird";
+import {ConnectedApi} from "palantiri-interfaces";
+import {UserAccount} from "palantiri-interfaces";
+import {Message} from "palantiri-interfaces";
 import {App, Contact, ContactAccount, Discussion, GroupAccount} from "palantiri";
 
-let MessageFlags = interfaces.MessageFlags;
+//let MessageFlags = interfaces.MessageFlags;
 
-export class FacebookProxy {}
+export class FacebookConnectedApi implements ConnectedApi {
+  protocol: string;
+
+  isCompatibleWith(protocol:string): boolean {
+    return undefined;
+  }
+
+  getContacts(account: UserAccount): Bluebird.Thenable<ContactAccount[]> {
+    return undefined;
+  }
+
+  getDiscussions(account: UserAccount, max?: number, filter?: (discuss: Discussion) => boolean): Bluebird.Thenable<Discussion[]> {
+    return undefined;
+  }
+  addMembersToGroupChat(members:ContactAccount[], groupChat:GroupAccount, callback?: (err: Error) => any): Bluebird.Thenable<ConnectedApi> {
+    return undefined;
+  }
+
+  removeMembersFromGroupChat(members: ContactAccount[], groupChat: GroupAccount, callback?: (err: Error) => any): Bluebird.Thenable<ConnectedApi> {
+    return undefined;
+  }
+
+  leaveGroupChat(group: GroupAccount, callback: (err: Error) => any): Bluebird.Thenable<ConnectedApi> {
+    return undefined;
+  }
+
+  sendMessage(msg: Message, recipients: GroupAccount, callback?: (err: Error, succesM: Message) => any): Bluebird.Thenable<ConnectedApi> {
+    return undefined;
+  }
+
+}
 
 // TODO : fix everything to use the new interfaces
 // export class FacebookProxy implements interfaces.ConnectedApi {
