@@ -3,10 +3,11 @@
  */
 import * as Bluebird from "bluebird";
 import {UserAccount} from "palantiri";
+import {Connection} from "palantiri-interfaces";
 import {FacebookConnection} from "./facebook-connection";
 
 export class FacebookUserAccount extends UserAccount {
-  getOrCreateConnection(): Bluebird<FacebookConnection> {
+  getOrCreateConnection(): Bluebird<Connection> {
     if(this.connection) {
       if(this.connection.connected) {
         return Bluebird.resolve(this.connection);

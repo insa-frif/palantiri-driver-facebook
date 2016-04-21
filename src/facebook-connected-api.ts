@@ -56,7 +56,7 @@ export class FacebookConnectedApi implements ConnectedApi {
 				discuss.isPrivate = true;
 				discuss.description = thread.snippet; // TODO : is that was snippet is ?
 				discuss.participants = [];
-				discuss.settings = new Map<string, any>();
+				//discuss.settings = new Map<string, any>();
 				// discuss.settings.set("threadID", thread.threadID);
 				// discuss.settings.set("participantsID", thread.participantIDs);
 				// discuss.settings.set("canReply", thread.canReply);
