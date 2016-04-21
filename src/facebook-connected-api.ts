@@ -149,7 +149,39 @@ export class FacebookConnectedApi implements ConnectedApi {
   }
 
   sendMessage(msg: Message, recipients: GroupAccount, callback?: (err: Error, succesM: Message) => any): Bluebird.Thenable<ConnectedApi> {
-    return undefined;
+    let message: facebookApi.Message = {
+      'body': msg.body,
+      // TODO : other fields
+    }
+
+
+		let error: Error = null;
+		if(recipients.localDiscussionID) {
+			this.facebookApi.sendMessage(message, recipients.localDiscussionID, (err, info) => {
+				if(err) {
+					error = err;
+				}
+				if(callback) {
+					callback(err, msg);
+				}
+			});
+		} else {
+			let ids: number[] = [];
+			for(let recipAccount of recipients.members) {
+				ids.push(recipAccount.localID);
+			}
+			this.facebookApi.sendMessage(message, ids, (err, info) => {
+				if(err) {
+					error = err;
+				} else {
+					recipients.localDiscussionID = +info.threadID;
+				}
+				if(callback) {
+					callback(err, msg);
+				}
+			});
+		}
+    return Bluebird.resolve(this);
   }
 
 }

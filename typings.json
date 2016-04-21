@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "bluebird": "registry:npm/bluebird#3.3.4+20160411163813",
-    "facebook-chat-api": "github:insa-frif/typed-facebook-chat-api#db2780ef99705af4d568230c16893f3ea52d372c",
+    "facebook-chat-api": "github:insa-frif/typed-facebook-chat-api#b566427080717909d1ffae53b4910a0ebcb7e922",
     "lodash": "registry:npm/lodash#4.0.0+20160416211519",
     "markdown-it": "registry:npm/markdown-it#4.0.0+20160323212212",
     "palantiri": "npm:palantiri",
