@@ -4,8 +4,7 @@ import * as facebookApi from "facebook-chat-api";
 import * as Bluebird from "bluebird";
 import {ConnectedApi} from "palantiri-interfaces";
 import {UserAccount} from "palantiri-interfaces";
-import {ContactAccount} from "palantiri";
-import {GroupAccount} from "palantiri";
+import {Contact} from "palantiri";
 import {Discussion} from "palantiri";
 import {Message} from "palantiri-interfaces";
 
@@ -18,8 +17,8 @@ export class FacebookConnectedApi implements ConnectedApi {
     return this.protocol.toLowerCase() === protocol.toLowerCase();
   }
 
-  getContacts(account: UserAccount): Bluebird.Thenable<ContactAccount[]> {
-		let contacts: ContactAccount[] = [];
+  getContacts(account: UserAccount): Bluebird.Thenable<Contact[]> {
+		let contacts: Contact[] = [];
 
 		if(this.facebookApi) {
 			let friends: any[] = [];
@@ -29,9 +28,9 @@ export class FacebookConnectedApi implements ConnectedApi {
 				}
 			});
 			for(let friend of friends) {
-				let contactAccount: ContactAccount = new ContactAccount();
+				let contactAccount: Contact = new Contact();
 				contactAccount.protocol = "facebook";
-				contactAccount.contactName = friend.fullName;
+				contactAccount.fullname = friend.fullName;
 				contactAccount.localID = friend.userID;
 				contacts.push(contactAccount);
 			}
@@ -51,45 +50,34 @@ export class FacebookConnectedApi implements ConnectedApi {
 			});
 			for(let thread of threadsList) {
 				let discuss: Discussion = new Discussion();
+        discuss.protocol = "facebook";
+        discuss.localDiscussionID = thread.threadID;
+        discuss.creationDate = thread.timestamp;  // TODO : care of the format
 				discuss.name = thread.name;
-				discuss.creationDate = null;
+        discuss.description = thread.snippet;     // TODO : is that was snippet is ?
 				discuss.isPrivate = true;
-				discuss.description = thread.snippet; // TODO : is that was snippet is ?
 				discuss.participants = [];
-				//discuss.settings = new Map<string, any>();
-				// discuss.settings.set("threadID", thread.threadID);
-				// discuss.settings.set("participantsID", thread.participantIDs);
-				// discuss.settings.set("canReply", thread.canReply);
-				// discuss.settings.set("blockedParticipants", thread.blockedParticipants);
-				// discuss.settings.set("lastMessageID", thread.lastMessageID);
-        // TODO : implement method set in dictionnary
-				// TODO : and so on
-				// account.getOwner().then((owner) => {
-				// 	discuss.owner = owner;
-				// });
-        // TODO : find a way to find the owner
-				let groupAccount: GroupAccount = new GroupAccount();
-				groupAccount.protocol = "facebook";
-				groupAccount.localDiscussionID = thread.threadID;
-				for(let recipientID of thread.participantIDs) {
-					let contactAccount : ContactAccount = new ContactAccount();
-					contactAccount.protocol = "facebook";
-					contactAccount.localID = recipientID;
-					this.facebookApi.getUserInfo(recipientID, (err, map) => {
-						if(!err) {
-							contactAccount.contactName = map[recipientID].name;
-              let member: ContactAccount[] = [contactAccount];
-							groupAccount.addMembers(member);
-						}
-					});
-				}
-				discuss.participants.push(groupAccount);
+        discuss.owner = account;
+        discuss.authorizations = {
+          write: thread.readOnly,
+          talk: thread.canReply,
+          video: true,
+          invite: true,
+          kick: false,
+          ban: false
+        };
+        discuss.settings = {
+          "participantsID": thread.participants,
+          "blockedParticipants": thread.blockedParticipants,
+          "lastMessageID": thread.lastMessageID
+          // TODO : and so on
+        };
+
 				if(!filter || filter(discuss)) {
 					discussions.push(discuss);
 				}
 			}
 		}
-
     return Bluebird.resolve(discussions);
   }
 
