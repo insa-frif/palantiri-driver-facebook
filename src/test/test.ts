@@ -1,8 +1,8 @@
 import {EventEmitter} from 'events';
 import * as readline from "readline";
 
-import * as login from "facebook-chat-api";
-
+import * as Bluebird from "bluebird";
+import * as fbChat from "facebook-chat-api";
 
 class FBEmitter extends EventEmitter {}
 
@@ -20,29 +20,39 @@ class FBConnection {
 			let username = mail;
 			rl.question("pass : ", function (passw: string) {
 				let password = passw;
-				login(
-					{email: username, password: password},
-					function callback (err, api) {
+
+        let credentials: fbChat.Credentials = {email: username, password: password};
+
+				fbChat(
+					credentials,
+					function callback (err: fbChat.ErrorObject, api: fbChat.Api) {
 						if (err) {
 							return console.error(err.error);
 						}
-						let bestFriendThread: number;
-						api.getThreadList(0, 1, function(err, data) {
+						let bestFriendThread: string;
+						api.getThreadList(0, 1, function(err: Error, data: fbChat.Thread[]) {
 							if(err) return console.error(err);
 							bestFriendThread = data[0].threadID;
 						});
-						api.listen(function callback(err, message) {
+						api.listen((err: Error, event: fbChat.Event) => {
 							if(err) {
 								console.log("Can't echoing...");
 								console.log(err);
+                return null;
 							}
-							else {
-								console.log("Message received ! It's says : " + message.body);
-								console.log("Echoing...");
-								console.log(message.threadID);
-								api.sendMessage("J'ai recu ton message !", message.threadID);
-								console.log("Echo done !");
-							}
+
+              if (event.type === "message") {
+                let messageEvent: fbChat.MessageEvent = <fbChat.MessageEvent> event;
+
+                console.log("Message received ! It's says : " + messageEvent.body);
+                console.log("Echoing...");
+                console.log(messageEvent.threadID);
+                api.sendMessage("J'ai recu ton message !", messageEvent.threadID);
+                console.log("Echo done !");
+              } else {
+                console.log("unkown event type");
+                console.log(event);
+              }
 						});
 						rl.question("Say something to Ruben !", function (rep: string) {
 							console.log("about to send " + rep + " to ruben...");
@@ -76,20 +86,20 @@ class FakeAccount {
 	password: string;
 	connection: FBConnection;
 
-	getOrCreateConnection(): Promise<FBConnection> {
+	getOrCreateConnection(): Bluebird<FBConnection> {
 		if(!this.connection)
 		{
 			this.connection = new FBConnection();
 			this.connection.connect();
 		}
-		return Promise.resolve(this.connection);
+		return Bluebird.resolve(this.connection);
 	}
 }
 
 let acc = new FakeAccount();
 acc.getOrCreateConnection().then((conn) => {
 	// TODO : find a way tom import typings from manual_typings
-	conn.addOneListener('sendMsg', (api: any, body: string, threadID: number) => {
+	conn.addOneListener('sendMsg', (api: fbChat.Api, body: string, threadID: number) => {
 		console.log("let's send " + body + " to ruben ! (" + threadID +")");
 		api.sendMessage(body, threadID, (err, info) => {
 			if(err)
@@ -104,86 +114,3 @@ acc.getOrCreateConnection().then((conn) => {
 		});
 	})
 });
-
-//let rl = readline.createInterface({
-//	input: process.stdin,
-//	output: process.stdout
-//});
-//
-//let email: string;
-//let pass: string;
-//let bestFriend: any;
-//
-//rl.question("email : ", function (mail: string) {
-//	email = mail;
-//	rl.question("pass : ", function (passw: string) {
-//		pass = passw;
-//		login(
-//			{email: email, password: pass},
-//			function callback (err, api) {
-//				if(err){
-//					return console.error(err.error);
-//				}
-//
-//				console.log("Gettings number of friends...");
-//				api.getFriendsList(function(err, data) {
-//					if(err) return console.error(err);
-//
-//					console.log("Number of friends : " + data.length);
-//					for(let friend of data)
-//					{
-//						console.log(friend.fullName);
-//						if(friend.fullName === "Ruben Pericas")
-//						{
-//							bestFriend = friend;
-//						}
-//					}
-//				});
-//
-//				console.log("Gettings 10 first thread's IDs...");
-//				api.getThreadList(0, 10, function(err, data) {
-//					if(err) return console.error(err);
-//
-//					console.log("Number of threads : " + data.length);
-//					for(let thread of data)
-//					{
-//						console.log(thread.threadID);
-//						// NB : we don't know if the user is 0 or 1... We must check all index in the lib
-//						if(thread.participantIDs[1] === bestFriend.userID)
-//						{
-//							console.log("this is our best friend ! Let him know by sending him a message");
-//							api.sendMessage("You are my best friend !", thread.threadID, (err, info) => {
-//								if(!err)
-//								{
-//									console.log("Now our best friend knows !");
-//								}
-//								else
-//								{
-//									console.log("An error occured, our best friend still have no clue");
-//								}
-//							});
-//						}
-//					}
-//				});
-//
-//				console.log("Trying to echo...");
-//				api.listen(function callback(err, message) {
-//					if(err) {
-//						console.log("Can't echoing...");
-//						console.log(err);
-//					}
-//					else {
-//						console.log("Message received ! It's says : " + message.body);
-//						console.log("Echoing...");
-//						console.log(message.threadID);
-//						api.sendMessage("J'ai recu ton message !", message.threadID);
-//						console.log("Echo done !");
-//					}
-//
-//				});
-//			}
-//		);
-//	});
-//});
-
-

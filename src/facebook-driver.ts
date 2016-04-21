@@ -7,6 +7,7 @@ import {App, Contact, ContactAccount, Discussion, GroupAccount} from "palantiri"
 
 let MessageFlags = interfaces.MessageFlags;
 
+export class FacebookProxy {}
 
 // TODO : fix everything to use the new interfaces
 // export class FacebookProxy implements interfaces.ConnectedApi {
