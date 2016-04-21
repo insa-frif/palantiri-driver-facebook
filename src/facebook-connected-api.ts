@@ -132,6 +132,19 @@ export class FacebookConnectedApi implements ConnectedApi {
   }
 
   leaveGroupChat(group: GroupAccount, callback: (err: Error) => any): Bluebird.Thenable<ConnectedApi> {
+    let err: Error = null;
+    if(group.localDiscussionID) {
+      this.facebookApi.deleteThread(group.localDiscussionID, (error) => {
+        if(!error) {
+          err = error;
+        }
+      });
+    } else {
+      err = new Error("Can not leave group...");
+    }
+    if(callback) {
+      callback(err);
+    }
     return Bluebird.resolve(this);
   }
 
