@@ -59,7 +59,16 @@ export class FacebookConnection extends EventEmitter implements Connection {
   }
 
   disconnect(): Bluebird.Thenable<FacebookConnection> {
-    return undefined;
+    if(this.connected) {
+      let that = this;
+      this.connectedApi.facebookApi.logout((err) => {
+        if(err) {
+          console.log("Can't disconect...");
+        }
+        that.connected = false;
+      });
+    }
+    return Bluebird.resolve(this);
   }
 
   getConnectedApi(): Bluebird.Thenable<FacebookConnectedApi> {
