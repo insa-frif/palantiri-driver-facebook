@@ -1,3 +1,2 @@
-export {FacebookConnectedApi} from "./facebook-connected-api";
-export {FacebookConnection} from "./facebook-connection";
-export {FacebookUserAccount} from "./facebook-user-account";
+export {FacebookApi as ConnectedApi} from "./facebook-api";
+export {FacebookConnection as Connection} from "./facebook-connection";

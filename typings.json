@@ -4,8 +4,8 @@
     "facebook-chat-api": "github:insa-frif/typed-facebook-chat-api#b566427080717909d1ffae53b4910a0ebcb7e922",
     "lodash": "registry:npm/lodash#4.0.0+20160416211519",
     "markdown-it": "registry:npm/markdown-it#4.0.0+20160323212212",
-    "palantiri": "npm:palantiri",
-    "palantiri-interfaces": "npm:palantiri-interfaces"
+    "palantiri-interfaces": "npm:palantiri-interfaces",
+    "palantiri-test": "npm:palantiri-test"
   },
   "devDependencies": {
     "chai": "registry:npm/chai#3.5.0+20160415060238"
