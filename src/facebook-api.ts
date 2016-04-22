@@ -3,26 +3,47 @@ import * as Bluebird from "bluebird";
 import {EventEmitter} from "events";
 
 import {Api, Message, Account, DiscussionId, AccountId, Discussion} from "palantiri-interfaces";
+import {FacebookConnection} from "./facebook-connection";
 
 export class FacebookApi extends EventEmitter implements Api {
+  nativeApi: fbChatApi.Api = null;
+  connection: FacebookConnection = null;
+
+  constructor (nativeApi: fbChatApi.Api, connection: FacebookConnection) {
+    super();
+    this.nativeApi = nativeApi;
+    this.connection = connection;
+    this.nativeApi.listen((err, ev) => this.handleNativeEvent(ev));
+  }
+
+  handleNativeEvent (event: fbChatApi.BaseFacebookEvent) {
+    console.log(event);
+  }
+
   getContacts(options?: any): Bluebird<Account[]> {
     return null;
   }
+
   contactExists(account: Account): Bluebird<boolean> {
     return null;
   }
+
   getDiscussions(options?: Api.GetDiscussionsOptions): Bluebird<Discussion[]> {
     return null;
   }
+
   addMembersToDiscussion(members: AccountId[], discussion: DiscussionId, options?: any): Bluebird<this> {
     return null;
   }
+
   removeMembersFromDiscussion(members: AccountId[], discussion: DiscussionId, options?: any): Bluebird<this> {
     return null;
   }
+
   leaveDiscussion(discussion: DiscussionId, options?: any): Bluebird<Api> {
     return null;
   }
+
   sendMessage(msg: Api.NewMessage, discussion: DiscussionId, options?: any): Bluebird<Api> {
     return null;
   }

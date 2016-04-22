@@ -12,10 +12,17 @@ export interface FacebookConnectionOptions {
   };
 }
 
+enum ConnectionState {
+  DISCONNECTED,
+  CONNECTING,
+  CONNECTED
+}
+
 export class FacebookConnection extends EventEmitter implements Connection {
   options: FacebookConnectionOptions = null;
-  connected: boolean = false;
   api: FacebookApi = null;
+
+  private connectionState: ConnectionState = ConnectionState.DISCONNECTED;
 
   constructor (options?: FacebookConnectionOptions) {
     super();
@@ -23,87 +30,50 @@ export class FacebookConnection extends EventEmitter implements Connection {
   }
 
   getInfo(): any {
-    return null;
+    return {driver: "facebook"};
   }
 
   isConnected(): boolean {
-    return false;
+    return this.connectionState === ConnectionState.CONNECTED;
   }
 
   getApi(): FacebookApi {
-    return null;
+    if (this.api === null) {
+      throw new Error("Api is not ready");
+    }
+    return this.api;
   }
 
   connect(): Bluebird<FacebookApi> {
-    return null;
+    if (this.connectionState === ConnectionState.DISCONNECTED) {
+      this.connectionState = ConnectionState.CONNECTING;
+    } else {
+      return Bluebird.try(() => this.getApi());
+    }
+
+    return Bluebird.fromCallback((cb) => {
+      fbChatApi(this.options.credentials, (api: fbChatApi.Api) => {
+        this.connectionState = ConnectionState.CONNECTED;
+        this.api = new FacebookApi(api, this);
+        cb(null, this.api);
+        this.emit(Connection.events.CONNECTED, this);
+      })
+    })
   }
 
   disconnect(): Bluebird<this> {
-    return null;
+    if (this.connectionState === ConnectionState.DISCONNECTED) {
+      return Bluebird.resolve(this);
+    }
+
+    return Bluebird.fromCallback((cb) => {
+      this.api.nativeApi.logout((err: Error) => {
+        if (err) {
+          return cb (new Error("Cannot logout"));
+        }
+        this.emit(Connection.events.DISCONNECTED, this);
+        cb(null, this);
+      });
+    });
   }
-
-  // connect(): Bluebird<FacebookApi> {
-  //   // TODO : when the database will be operational, get this from the database
-  //   let rl = readline.createInterface({
-  //     input: process.stdin,
-  //     output: process.stdout
-  //   });
-  //   let that = this;
-  //   rl.question("email : ", function (mail: string) {
-  //     rl.question("pass : ", function (passw: string) {
-  //     	fbChatApi(
-  //     		{email: mail, password: passw},
-  //     		function callback (err, api) {
-  //     			if(!err) {
-  //     				that.connected = true;
-  //     				that.connectedApi = new FacebookApi();
-  //             that.connectedApi.facebookApi = api;
-  //             api.listen((err, event) => {
-  //               if (err) {
-  //                 console.log("Can't listen...");
-  //                 console.log(err);
-  //                 return null;
-  //               }
-  //               if((event.type === "message")) {
-  //                 let messageEvent: fbChatApi.MessageEvent = <fbChatApi.MessageEvent> event;
-  //                 let message: Message = new Message();
-  //                 message.body = messageEvent.body;
-  //                 // TODO : complete message's fields
-  //                 // TODO : import standardEvents from palantiri-interfaces
-  //                 that.emit("messageReceived", message);
-  //               }
-  //             });
-  //             // TODO : handle other basic events and emit other events to inform User
-  //     			} else {
-  //     				that.connected = false;
-  //             that.connectedApi = null;
-  //     			}
-  //     		}
-  //     	);
-  //     });
-  //   });
-  //   return Bluebird.resolve(this.connectedApi);
-  // }
-
-
-  // disconnect(): Bluebird.Thenable<FacebookConnection> {
-  //   if(this.connected) {
-  //     let that = this;
-  //     this.connectedApi.facebookApi.logout((err) => {
-  //       if(err) {
-  //         console.log("Can't disconect...");
-  //       }
-  //       that.connected = false;
-  //     });
-  //   }
-  //   return Bluebird.resolve(this);
-  // }
-  //
-  // getConnectedApi(): Bluebird.Thenable<FacebookApi> {
-  //   if (!this.connected) {
-  //     return Bluebird.resolve()
-  //   }
-  //   return Bluebird.resolve(this.connectedApi);
-  // }
-
 }
