@@ -20,15 +20,14 @@ export class FacebookApi extends EventEmitter implements Api {
       id: String(this.nativeApi.getCurrentUserID()),
       driver: "facebook",
       name: nativeCurrentUser.name,
-      driverData: nativeCurrentUser
+      driverData: nativeCurrentUser,
+      getOrCreateConnection: null,
+      sendMessage: null
     };
 
-    let self = this;
-    this.nativeApi.listen(function (err, ev){
-      console.log("received event");
-      console.log(arguments);
-      self.handleNativeEvent(ev);
-    });
+    this.nativeApi.listen((err, ev) => {
+      this.handleNativeEvent(ev);
+    })
   }
 
   handleNativeEvent (nativeEvent: fbChatApi.BaseFacebookEvent) {
@@ -59,8 +58,11 @@ export class FacebookApi extends EventEmitter implements Api {
       },
       discussionId: String(nativeEvent.threadID)
     };
-    console.log(event);
     this.emit(Api.events.MESSAGE, event);
+  }
+
+  getCurrentUser(): Bluebird<UserAccount> {
+    return Bluebird.resolve(this.user);
   }
 
   getContacts(options?: any): Bluebird<Account[]> {
@@ -160,7 +162,6 @@ export class FacebookApi extends EventEmitter implements Api {
           body: message.body
         };
         return Bluebird.fromCallback(this.nativeApi.sendMessage.bind(null, fbMessage, discussionId));
-
       })
       .thenReturn(this);
   }
