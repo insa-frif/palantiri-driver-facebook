@@ -1,18 +1,28 @@
 import * as fbChatApi from "facebook-chat-api";
 import * as Bluebird from "bluebird";
+import * as _ from "lodash";
 import {EventEmitter} from "events";
 
-import {Api, Message, Account, DiscussionId, AccountId, Discussion} from "palantiri-interfaces";
+import {Api, UserAccount, Account, DiscussionId, AccountId, Discussion} from "palantiri-interfaces";
 import {FacebookConnection} from "./facebook-connection";
 
 export class FacebookApi extends EventEmitter implements Api {
   nativeApi: fbChatApi.Api = null;
   connection: FacebookConnection = null;
+  user: UserAccount = null;
 
-  constructor (nativeApi: fbChatApi.Api, connection: FacebookConnection) {
+  constructor (nativeApi: fbChatApi.Api, nativeCurrentUser: fbChatApi.GetUserInfoResult, connection: FacebookConnection) {
     super();
     this.nativeApi = nativeApi;
     this.connection = connection;
+
+    this.user = {
+      id: String(this.nativeApi.getCurrentUserID()),
+      driver: "facebook",
+      name: nativeCurrentUser.name,
+      driverData: nativeCurrentUser
+    };
+
     this.nativeApi.listen((err, ev) => this.handleNativeEvent(ev));
   }
 
@@ -21,192 +31,104 @@ export class FacebookApi extends EventEmitter implements Api {
   }
 
   getContacts(options?: any): Bluebird<Account[]> {
-    return null;
+    return Bluebird.fromCallback(this.nativeApi.getFriendsList)
+      .catch((error: Error | fbChatApi.ErrorObject) => { // normalize the error handling from facebook-chat-api
+        let msg: string = (<Error>error).message || (<fbChatApi.ErrorObject>error).error;
+        return Bluebird.reject(new Error(msg));
+      })
+      .map((friend: fbChatApi.Friend) => {
+        let contactAccount: Account;
+        contactAccount = {
+          id: String(friend.userID),
+          driver: "facebook",
+          name: friend.fullName,
+          driverData: friend
+        };
+        return contactAccount;
+      });
   }
 
   contactExists(account: Account): Bluebird<boolean> {
-    return null;
+    return Bluebird.resolve(true);
   }
 
   getDiscussions(options?: Api.GetDiscussionsOptions): Bluebird<Discussion[]> {
-    return null;
+    let emptyOptions: Api.GetDiscussionsOptions = {
+      max: null,
+      filter: null
+    };
+    options = _.assign({}, options, emptyOptions);
+
+    return Bluebird.fromCallback(this.nativeApi.getThreadList.bind(null, 0, options.max))
+      .catch((error: Error | fbChatApi.ErrorObject) => { // normalize the error handling from facebook-chat-api
+        let msg: string = (<Error> error).message || (<fbChatApi.ErrorObject> error).error;
+        return Bluebird.reject(new Error(msg));
+      })
+      .map((thread: fbChatApi.Thread) => {
+        let discussion:Discussion;
+
+        // TODO: remove it once WebStorm stops to complain...
+        //noinspection TypeScriptValidateTypes
+        discussion = {
+          id: thread.threadID,
+          driver: "facebook",
+          creationDate: thread.timestamp,
+          name: thread.name,
+          description: thread.snippet,
+          isPrivate: true,
+          participants: [],
+          owner: this.user, // TODO: is he really the owner ?
+          authorizations: {
+            write: thread.readOnly,
+            talk: thread.canReply,
+            video: true,
+            invite: true,
+            kick: false,
+            ban: false
+          },
+          driverData: thread
+        };
+
+        return discussion;
+      })
+      .filter((discussion: Discussion) => {
+        if (!options.filter) {
+          return true;
+        }
+        return options.filter(discussion);
+      });
   }
 
-  addMembersToDiscussion(members: AccountId[], discussion: DiscussionId, options?: any): Bluebird<this> {
-    return null;
+  addMembersToDiscussion(members: AccountId[], discussionId: DiscussionId, options?: any): Bluebird<this> {
+    return Bluebird
+      .each(members, (memberId) => {
+        return Bluebird.fromCallback(this.nativeApi.addUserToGroup.bind(null, memberId, discussionId)); // TODO: normalize errors
+      })
+      .thenReturn(this);
   }
 
-  removeMembersFromDiscussion(members: AccountId[], discussion: DiscussionId, options?: any): Bluebird<this> {
-    return null;
+  removeMembersFromDiscussion(members: AccountId[], discussionId: DiscussionId, options?: any): Bluebird<this> {
+    return Bluebird
+      .each(members, (memberId) => {
+        return Bluebird.fromCallback(this.nativeApi.removeUserFromGroup.bind(null, memberId, discussionId)); // TODO: normalize errors
+      })
+      .thenReturn(this);
   }
 
-  leaveDiscussion(discussion: DiscussionId, options?: any): Bluebird<Api> {
-    return null;
+  leaveDiscussion(discussion: DiscussionId, options?: any): Bluebird<this> {
+    console.warn("FacebokApi:leveDiscussion is not implemented");
+    return Bluebird.resolve(this);
   }
 
-  sendMessage(msg: Api.NewMessage, discussion: DiscussionId, options?: any): Bluebird<Api> {
-    return null;
+  sendMessage(message: Api.NewMessage, discussionId: DiscussionId, options?: any): Bluebird<this> {
+    return Bluebird
+      .try(() => {
+        let fbMessage: fbChatApi.Message = {
+          body: message.body
+        };
+        return Bluebird.fromCallback(this.nativeApi.sendMessage.bind(null, fbMessage, discussionId));
+
+      })
+      .thenReturn(this);
   }
-
-  // protocol: string;
-  //
-  // facebookApi: fbChatApi.Api;
-  //
-  // isCompatibleWith(protocol: string): boolean {
-  //   return this.protocol.toLowerCase() === protocol.toLowerCase();
-  // }
-  //
-  // getContacts(): Bluebird<Account[]> {
-  //   let contacts: Account[] = [];
-  //
-  //   if(this.facebookApi) {
-  //     let friends: any[] = [];
-  //     this.facebookApi.getFriendsList((err, people) => {
-  //       if(!err) {
-  //         friends = people;
-  //       }
-  //     });
-  //     for(let friend of friends) {
-  //       let contactAccount: Contact = new Contact();
-  //       contactAccount.protocol = "facebook";
-  //       contactAccount.fullname = friend.fullName;
-  //       contactAccount.localID = friend.userID;
-  //       contacts.push(contactAccount);
-  //     }
-  //   }
-  //   return Bluebird.resolve(contacts);
-  // }
-  //
-  // getDiscussions(account: UserAccount, max?: number, filter?: (discuss: Discussion) => boolean): Bluebird.Thenable<Discussion[]> {
-  //   let discussions: Discussion[] = [];
-  //
-  //   if(this.facebookApi) {
-  //     let threadsList: any[] = [];
-  //     this.facebookApi.getThreadList(0, max, (err, threads) => {
-  //       if (!err) {
-  //         threadsList = threads;
-  //       }
-  //     });
-  //     for(let thread of threadsList) {
-  //       let discuss: Discussion = new Discussion();
-  //       discuss.protocol = "facebook";
-  //       discuss.localDiscussionID = thread.threadID;
-  //       discuss.creationDate = thread.timestamp;  // TODO : care of the format
-  //       discuss.name = thread.name;
-  //       discuss.description = thread.snippet;     // TODO : is that was snippet is ?
-  //       discuss.isPrivate = true;
-  //       discuss.participants = [];
-  //       discuss.owner = account;
-  //       discuss.authorizations = {
-  //         write: thread.readOnly,
-  //         talk: thread.canReply,
-  //         video: true,
-  //         invite: true,
-  //         kick: false,
-  //         ban: false
-  //       };
-  //       discuss.settings = {
-  //         "participantsID": thread.participants,
-  //         "blockedParticipants": thread.blockedParticipants,
-  //         "lastMessageID": thread.lastMessageID
-  //         // TODO : and so on
-  //       };
-  //
-  //       if(!filter || filter(discuss)) {
-  //         discussions.push(discuss);
-  //       }
-  //     }
-  //   }
-  //   return Bluebird.resolve(discussions);
-  // }
-  //
-  // addMembersToDiscussion(members: Contact[], discussion: Discussion, callback?: (err: Error) => any): Bluebird.Thenable<ConnectedApi> {
-  //   let err: Error = null;
-  //   for(let member of members) {
-  //     if(member.protocol.toLowerCase() === discussion.protocol.toLowerCase() && member.localID && discussion.localDiscussionID) {
-  //       this.facebookApi.addUserToGroup(member.localID, discussion.localDiscussionID, (error) => {
-  //         if(!err) {
-  //           err = error;
-  //         }
-  //       });
-  //     } else if (!err) {
-  //       err = new Error("At least one of the participants could not be added.");
-  //     }
-  //   }
-  //   if(callback) {
-  //     callback(err);
-  //   }
-  //   return Bluebird.resolve(this);
-  // }
-  //
-  // removeMembersFromDiscussion(members: Contact[], discussion: Discussion, callback?: (err: Error) => any): Bluebird.Thenable<ConnectedApi> {
-  //   let err: Error = null;
-  //   for(let member of members) {
-  //     if(member.protocol.toLowerCase() === discussion.protocol.toLowerCase() && member.localID && discussion.localDiscussionID) {
-  //       this.facebookApi.removeUserFromGroup(member.localID, discussion.localDiscussionID, (error) => {
-  //         if(!error) {
-  //           err = error;
-  //         }
-  //       });
-  //     } else if (!err) {
-  //       err = new Error("At least one of the participants could not be added.");
-  //     }
-  //   }
-  //   if(callback) {
-  //     callback(err);
-  //   }
-  //   return Bluebird.resolve(this);
-  // }
-  //
-  // leaveDiscussion(discussion: Discussion, callback: (err: Error) => any): Bluebird.Thenable<ConnectedApi> {
-  //   let err: Error = null;
-  //   if(discussion.localDiscussionID) {
-  //     this.facebookApi.deleteThread(discussion.localDiscussionID, (error) => {
-  //       if(!error) {
-  //         err = error;
-  //       }
-  //     });
-  //   } else {
-  //     err = new Error("Can not leave discussion...");
-  //   }
-  //   if(callback) {
-  //     callback(err);
-  //   }
-  //   return Bluebird.resolve(this);
-  // }
-  //
-  // sendMessage(msg: Message, discussion: Discussion, callback?: (err: Error, succesM: Message) => any): Bluebird.Thenable<ConnectedApi> {
-  //   let message: fbChatApi.Message = {
-  //     'body': msg.body,
-  //     // TODO : other fields
-  //   };
-  //   let error: Error = null;
-  //   if(discussion.localDiscussionID) {
-  //     this.facebookApi.sendMessage(message, discussion.localDiscussionID, (err, info) => {
-  //       if(err) {
-  //         error = err;
-  //       }
-  //       if(callback) {
-  //         callback(err, msg);
-  //       }
-  //     });
-  //   } else {
-  //     let ids: number[] = [];
-  //     for(let contact of discussion.participants) {
-  //       ids.push(contact.localID);
-  //     }
-  //     this.facebookApi.sendMessage(message, ids, (err, info) => {
-  //       if(err) {
-  //         error = err;
-  //       } else {
-  //         discussion.localDiscussionID = +info.threadID;
-  //       }
-  //       if(callback) {
-  //         callback(err, msg);
-  //       }
-  //     });
-  //   }
-  //   return Bluebird.resolve(this);
-  // }
-
 }

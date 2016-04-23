@@ -38,6 +38,9 @@ export class FacebookConnection extends EventEmitter implements Connection {
   }
 
   getApi(): FacebookApi {
+    if (!this.isConnected()) {
+      throw new Error("Not connected");
+    }
     if (this.api === null) {
       throw new Error("Api is not ready");
     }
@@ -51,14 +54,16 @@ export class FacebookConnection extends EventEmitter implements Connection {
       return Bluebird.try(() => this.getApi());
     }
 
-    return Bluebird.fromCallback((cb) => {
-      fbChatApi(this.options.credentials, (api: fbChatApi.Api) => {
-        this.connectionState = ConnectionState.CONNECTED;
-        this.api = new FacebookApi(api, this);
-        cb(null, this.api);
-        this.emit(Connection.events.CONNECTED, this);
-      })
-    })
+    return Bluebird.fromCallback(fbChatApi.bind(this.options.credentials))
+      .then((api: fbChatApi.Api) => {
+        return Bluebird.fromCallback(api.getUserInfo.bind(null, [api.getCurrentUserID()]))
+          .then((results: fbChatApi.GetUserInfoResult[]) => {
+            this.connectionState = ConnectionState.CONNECTED;
+            this.api = new FacebookApi(api, results[0], this);
+            this.emit(Connection.events.CONNECTED, this);
+            return this.api;
+          });
+      });
   }
 
   disconnect(): Bluebird<this> {
