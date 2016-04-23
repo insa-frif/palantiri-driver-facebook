@@ -48,19 +48,26 @@ export class FacebookConnection extends EventEmitter implements Connection {
   }
 
   connect(): Bluebird<FacebookApi> {
+    console.log("starting to connect");
     if (this.connectionState === ConnectionState.DISCONNECTED) {
       this.connectionState = ConnectionState.CONNECTING;
     } else {
       return Bluebird.try(() => this.getApi());
     }
-
-    return Bluebird.fromCallback(fbChatApi.bind(this.options.credentials))
-      .then((api: fbChatApi.Api) => {
-        return Bluebird.fromCallback(api.getUserInfo.bind(null, [api.getCurrentUserID()]))
+    console.log("pending connection");
+    return Bluebird.fromCallback(fbChatApi.bind(null, this.options.credentials))
+      .then((nativeApi: fbChatApi.Api) => {
+        console.log("nativeApi: ");
+        console.log(nativeApi);
+        let id = nativeApi.getCurrentUserID();
+        return Bluebird.fromCallback(nativeApi.getUserInfo.bind(null, [id]))
           .then((results: fbChatApi.GetUserInfoResult[]) => {
+            console.log(results);
             this.connectionState = ConnectionState.CONNECTED;
-            this.api = new FacebookApi(api, results[0], this);
+            this.api = new FacebookApi(nativeApi, results[id], this);
             this.emit(Connection.events.CONNECTED, this);
+            console.log("api: ");
+            console.log(this.api);
             return this.api;
           });
       });

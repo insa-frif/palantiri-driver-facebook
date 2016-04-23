@@ -9,13 +9,18 @@ export function getOptions(): Bluebird<any> {
 
   let credentials: any = {};
 
-  return Bluebird.fromCallback(rl.question.bind(rl, "Email: "))
+  return Bluebird.fromCallback((cb) => {
+      rl.question("Email: ", (res) => cb(null, res));
+    })
     .then((email: string) => {
       credentials.email = email;
-      return Bluebird.fromCallback(rl.question.bind(rl, "Password: "));
+      return Bluebird.fromCallback((cb) => {
+        rl.question("Password: ", (res) => cb(null, res));
+      })
     })
     .then((password: string) => {
       credentials.password = password;
+      console.log(credentials);
       return {credentials: credentials};
     });
 }

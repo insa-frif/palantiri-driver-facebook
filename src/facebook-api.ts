@@ -23,11 +23,44 @@ export class FacebookApi extends EventEmitter implements Api {
       driverData: nativeCurrentUser
     };
 
-    this.nativeApi.listen((err, ev) => this.handleNativeEvent(ev));
+    let self = this;
+    this.nativeApi.listen(function (err, ev){
+      console.log("received event");
+      console.log(arguments);
+      self.handleNativeEvent(ev);
+    });
   }
 
-  handleNativeEvent (event: fbChatApi.BaseFacebookEvent) {
+  handleNativeEvent (nativeEvent: fbChatApi.BaseFacebookEvent) {
+    switch (nativeEvent.type) {
+      case "message": return this.handleMessageEvent(<fbChatApi.MessageEvent> nativeEvent);
+      default:
+        console.log(nativeEvent);
+    }
+  }
+
+  handleMessageEvent (nativeEvent: fbChatApi.MessageEvent) {
+    let event: Api.events.MessageEvent;
+
+    // TODO: remove it once WebStorm stops to complain...
+    //noinspection TypeScriptValidateTypes
+    event = {
+      type: Api.events.MESSAGE,
+      message: {
+        id: String(nativeEvent.messageID),
+        driver: "facebook",
+        author: null,
+        body: nativeEvent.body,
+        content: nativeEvent.body,
+        flags: 0,
+        creationDate: new Date(Date.now()),
+        lastUpdated: null,
+        driverData: nativeEvent
+      },
+      discussionId: String(nativeEvent.threadID)
+    };
     console.log(event);
+    this.emit(Api.events.MESSAGE, event);
   }
 
   getContacts(options?: any): Bluebird<Account[]> {
