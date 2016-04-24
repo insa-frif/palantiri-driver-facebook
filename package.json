@@ -1,6 +1,6 @@
 {
   "name": "palantiri-driver-facebook",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Facebook driver for palantiri",
   "main": "dist/node/main.js",
   "repository": {
@@ -38,6 +38,6 @@
     "facebook-chat-api": "^1.1.0",
     "incident": "^1.0.5",
     "lodash": "^4.0.0",
-    "palantiri-interfaces": "^0.2.0"
+    "palantiri-interfaces": "^0.3.0"
   }
 }
