@@ -19,6 +19,8 @@ enum ConnectionState {
 }
 
 export class FacebookConnection extends EventEmitter implements Connection {
+  static driver: "facebook";
+  driver: "facebook";
   options: FacebookConnectionOptions = null;
   api: FacebookApi = null;
 

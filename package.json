@@ -1,6 +1,6 @@
 {
   "name": "palantiri-driver-facebook",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Facebook driver for palantiri",
   "main": "dist/node/main.js",
   "repository": {
@@ -22,7 +22,8 @@
     "gulp": "^3.9.1",
     "jquery": "^2.2.1",
     "typescript": "^1.8.10",
-    "via-build-tools": "^0.8.2"
+    "via-build-tools": "^0.8.2",
+    "palantiri-test": "^0.0.0"
   },
   "jspm": {
     "configFile": "systemjs.config.js",
@@ -37,6 +38,6 @@
     "facebook-chat-api": "^1.0.8",
     "incident": "^1.0.5",
     "lodash": "^4.0.0",
-    "palantiri-interfaces": "^0.3.0"
+    "palantiri-interfaces": "^0.2.0"
   }
 }
