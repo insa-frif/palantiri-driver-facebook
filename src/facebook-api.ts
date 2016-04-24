@@ -3,7 +3,7 @@ import * as Bluebird from "bluebird";
 import * as _ from "lodash";
 import {EventEmitter} from "events";
 
-import {Api, UserAccount, Account, DiscussionId, AccountId, Discussion} from "palantiri-interfaces";
+import {Api, UserAccount, Account, DiscussionId, AccountId, Discussion, Message} from "palantiri-interfaces";
 import {FacebookConnection} from "./facebook-connection";
 
 export class FacebookApi extends EventEmitter implements Api {
@@ -20,9 +20,7 @@ export class FacebookApi extends EventEmitter implements Api {
       id: String(this.nativeApi.getCurrentUserID()),
       driver: "facebook",
       name: nativeCurrentUser.name,
-      driverData: nativeCurrentUser,
-      getOrCreateConnection: null,
-      sendMessage: null
+      driverData: nativeCurrentUser
     };
 
     this.nativeApi.listen((err, ev) => {
@@ -155,7 +153,7 @@ export class FacebookApi extends EventEmitter implements Api {
     return Bluebird.resolve(this);
   }
 
-  sendMessage(message: Api.NewMessage, discussionId: DiscussionId, options?: any): Bluebird<this> {
+  sendMessage(message: Api.NewMessage, discussionId: DiscussionId, options?: any): Bluebird<Message> {
     return Bluebird
       .try(() => {
         let fbMessage: fbChatApi.Message = {
@@ -163,6 +161,20 @@ export class FacebookApi extends EventEmitter implements Api {
         };
         return Bluebird.fromCallback(this.nativeApi.sendMessage.bind(null, fbMessage, discussionId));
       })
-      .thenReturn(this);
+      .then((messageInfo: fbChatApi.MessageInfo) => {
+        let result: Message;
+        result = {
+          driver: "facebook",
+          id: messageInfo.messageID,
+          author: null,
+          body: message.body,
+          content: message.body,
+          flags: 0,
+          creationDate: new Date(parseInt(messageInfo.timestamp, 10)),
+          lastUpdated: null,
+          driverData: messageInfo
+        };
+        return result;
+      });
   }
 }
