@@ -1,7 +1,7 @@
 import * as fbChatApi from "facebook-chat-api";
 import * as Bluebird from "bluebird";
 import {EventEmitter} from "events";
-import {Connection} from "palantiri-interfaces";
+import * as palantiri from "palantiri-interfaces";
 
 import {FacebookApi} from "./facebook-api";
 
@@ -18,7 +18,7 @@ enum ConnectionState {
   CONNECTED
 }
 
-export class FacebookConnection extends EventEmitter implements Connection {
+export class FacebookConnection extends EventEmitter implements palantiri.Connection {
   static driver: string = "facebook";
   driver: string = "facebook";
   options: FacebookConnectionOptions = null;
@@ -59,10 +59,10 @@ export class FacebookConnection extends EventEmitter implements Connection {
       .then((nativeApi: fbChatApi.Api) => {
         let id = nativeApi.getCurrentUserID();
         return Bluebird.fromCallback(nativeApi.getUserInfo.bind(null, [id]))
-          .then((results: fbChatApi.GetUserInfoResult[]) => {
+          .then((results: {[id: string]: fbChatApi.UserInfo}) => {
             this.connectionState = ConnectionState.CONNECTED;
             this.api = new FacebookApi(nativeApi, results[id], this);
-            this.emit(Connection.events.CONNECTED, this);
+            this.emit(palantiri.Connection.events.CONNECTED, this);
             return this.api;
           });
       });
@@ -74,11 +74,11 @@ export class FacebookConnection extends EventEmitter implements Connection {
     }
 
     return Bluebird.fromCallback((cb) => {
-      this.api.nativeApi.logout((err: Error) => {
+      this.api.nativeApi.logout((err: fbChatApi.ErrorObject) => {
         if (err) {
           return cb (new Error("Cannot logout"));
         }
-        this.emit(Connection.events.DISCONNECTED, this);
+        this.emit(palantiri.Connection.events.DISCONNECTED, this);
         cb(null, this);
       });
     });

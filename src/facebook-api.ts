@@ -3,22 +3,23 @@ import * as Bluebird from "bluebird";
 import * as _ from "lodash";
 import {EventEmitter} from "events";
 
-import {Api, UserAccount, Account, DiscussionId, AccountId, Discussion, Message} from "palantiri-interfaces";
+import * as palantiri from "palantiri-interfaces";
 import {FacebookConnection} from "./facebook-connection";
 
-export class FacebookApi extends EventEmitter implements Api {
+export class FacebookApi extends EventEmitter implements palantiri.Api {
   nativeApi: fbChatApi.Api = null;
   connection: FacebookConnection = null;
-  user: UserAccount = null;
+  user: palantiri.UserAccount = null;
 
-  constructor (nativeApi: fbChatApi.Api, nativeCurrentUser: fbChatApi.GetUserInfoResult, connection: FacebookConnection) {
+  constructor (nativeApi: fbChatApi.Api, nativeCurrentUser: fbChatApi.UserInfo, connection: FacebookConnection) {
     super();
     this.nativeApi = nativeApi;
     this.connection = connection;
 
     this.user = {
+      driverName: "facebook",
       id: String(this.nativeApi.getCurrentUserID()),
-      driver: "facebook",
+      avatarUrl: nativeCurrentUser.thumbSrc,
       name: nativeCurrentUser.name,
       driverData: nativeCurrentUser
     };
@@ -28,7 +29,7 @@ export class FacebookApi extends EventEmitter implements Api {
     })
   }
 
-  handleNativeEvent (nativeEvent: fbChatApi.BaseFacebookEvent) {
+  handleNativeEvent (nativeEvent: fbChatApi.BaseEvent) {
     switch (nativeEvent.type) {
       case "message": return this.handleMessageEvent(<fbChatApi.MessageEvent> nativeEvent);
       default:
@@ -37,15 +38,15 @@ export class FacebookApi extends EventEmitter implements Api {
   }
 
   handleMessageEvent (nativeEvent: fbChatApi.MessageEvent) {
-    let event: Api.events.MessageEvent;
+    let event: palantiri.Api.events.MessageEvent;
 
     // TODO: remove it once WebStorm stops to complain...
     //noinspection TypeScriptValidateTypes
     event = {
-      type: Api.events.MESSAGE,
+      type: palantiri.Api.events.MESSAGE,
       message: {
         id: String(nativeEvent.messageID),
-        driver: "facebook",
+        driverName: "facebook",
         author: null,
         body: nativeEvent.body,
         content: nativeEvent.body,
@@ -56,24 +57,53 @@ export class FacebookApi extends EventEmitter implements Api {
       },
       discussionId: String(nativeEvent.threadID)
     };
-    this.emit(Api.events.MESSAGE, event);
+    this.emit(palantiri.Api.events.MESSAGE, event);
   }
 
-  getCurrentUser(): Bluebird<UserAccount> {
+  getAccountInfo(account: palantiri.AccountReference | palantiri.AccountGlobalId): Bluebird<palantiri.Account> {
+    return Bluebird
+      .try(() => {
+        let accountRef: palantiri.AccountReference = palantiri.GlobalId.coerceAsParsedId(account);
+        if (accountRef === null) {
+          // TODO: handle this case...
+        }
+
+        return Bluebird
+          .fromCallback(this.nativeApi.getUserInfo.bind(null, [accountRef.id]))
+          .catch((error: Error | fbChatApi.ErrorObject) => { // normalize the error handling from facebook-chat-api
+            let msg: string = (<Error>error).message || (<fbChatApi.ErrorObject>error).error;
+            return Bluebird.reject(new Error(msg));
+          })
+          .then((results: {[id: string]: fbChatApi.UserInfo}) => {
+            let nativeInfo = results[accountRef.id];
+            let account: palantiri.Account = {
+              driverName: "facebook",
+              id: String(this.nativeApi.getCurrentUserID()),
+              avatarUrl: nativeInfo.thumbSrc,
+              name: nativeInfo.name,
+              driverData: nativeInfo
+            };
+            return account;
+          })
+      });
+  }
+
+  getCurrentUser(): Bluebird<palantiri.UserAccount> {
     return Bluebird.resolve(this.user);
   }
 
-  getContacts(options?: any): Bluebird<Account[]> {
+  getContacts(options?: any): Bluebird<palantiri.Account[]> {
     return Bluebird.fromCallback(this.nativeApi.getFriendsList)
       .catch((error: Error | fbChatApi.ErrorObject) => { // normalize the error handling from facebook-chat-api
         let msg: string = (<Error>error).message || (<fbChatApi.ErrorObject>error).error;
         return Bluebird.reject(new Error(msg));
       })
       .map((friend: fbChatApi.Friend) => {
-        let contactAccount: Account;
+        let contactAccount: palantiri.Account;
         contactAccount = {
+          driverName: "facebook",
           id: String(friend.userID),
-          driver: "facebook",
+          avatarUrl: friend.profilePicture,
           name: friend.fullName,
           driverData: friend
         };
@@ -81,12 +111,12 @@ export class FacebookApi extends EventEmitter implements Api {
       });
   }
 
-  contactExists(account: Account): Bluebird<boolean> {
+  contactExists(account: palantiri.Account): Bluebird<boolean> {
     return Bluebird.resolve(true);
   }
 
-  getDiscussions(options?: Api.GetDiscussionsOptions): Bluebird<Discussion[]> {
-    let emptyOptions: Api.GetDiscussionsOptions = {
+  getDiscussions(options?: palantiri.Api.GetDiscussionsOptions): Bluebird<palantiri.Discussion[]> {
+    let emptyOptions: palantiri.Api.GetDiscussionsOptions = {
       max: null,
       filter: null
     };
@@ -98,13 +128,13 @@ export class FacebookApi extends EventEmitter implements Api {
         return Bluebird.reject(new Error(msg));
       })
       .map((thread: fbChatApi.Thread) => {
-        let discussion:Discussion;
+        let discussion: palantiri.Discussion;
 
         // TODO: remove it once WebStorm stops to complain...
         //noinspection TypeScriptValidateTypes
         discussion = {
           id: thread.threadID,
-          driver: "facebook",
+          driverName: "facebook",
           creationDate: thread.timestamp,
           name: thread.name,
           description: thread.snippet,
@@ -124,7 +154,7 @@ export class FacebookApi extends EventEmitter implements Api {
 
         return discussion;
       })
-      .filter((discussion: Discussion) => {
+      .filter((discussion: palantiri.Discussion) => {
         if (!options.filter) {
           return true;
         }
@@ -132,7 +162,7 @@ export class FacebookApi extends EventEmitter implements Api {
       });
   }
 
-  addMembersToDiscussion(members: AccountId[], discussionId: DiscussionId, options?: any): Bluebird<this> {
+  addMembersToDiscussion(members: palantiri.AccountId[], discussionId: palantiri.DiscussionId, options?: any): Bluebird<this> {
     return Bluebird
       .each(members, (memberId) => {
         return Bluebird.fromCallback(this.nativeApi.addUserToGroup.bind(null, memberId, discussionId)); // TODO: normalize errors
@@ -140,7 +170,7 @@ export class FacebookApi extends EventEmitter implements Api {
       .thenReturn(this);
   }
 
-  removeMembersFromDiscussion(members: AccountId[], discussionId: DiscussionId, options?: any): Bluebird<this> {
+  removeMembersFromDiscussion(members: palantiri.AccountId[], discussionId: palantiri.DiscussionId, options?: any): Bluebird<this> {
     return Bluebird
       .each(members, (memberId) => {
         return Bluebird.fromCallback(this.nativeApi.removeUserFromGroup.bind(null, memberId, discussionId)); // TODO: normalize errors
@@ -148,12 +178,12 @@ export class FacebookApi extends EventEmitter implements Api {
       .thenReturn(this);
   }
 
-  leaveDiscussion(discussion: DiscussionId, options?: any): Bluebird<this> {
+  leaveDiscussion(discussion: palantiri.DiscussionId, options?: any): Bluebird<this> {
     console.warn("FacebokApi:leveDiscussion is not implemented");
     return Bluebird.resolve(this);
   }
 
-  sendMessage(message: Api.NewMessage, discussionId: DiscussionId, options?: any): Bluebird<Message> {
+  sendMessage(message: palantiri.Api.NewMessage, discussionId: palantiri.DiscussionId, options?: any): Bluebird<palantiri.Message> {
     return Bluebird
       .try(() => {
         let fbMessage: fbChatApi.Message = {
@@ -162,9 +192,9 @@ export class FacebookApi extends EventEmitter implements Api {
         return Bluebird.fromCallback(this.nativeApi.sendMessage.bind(null, fbMessage, discussionId));
       })
       .then((messageInfo: fbChatApi.MessageInfo) => {
-        let result: Message;
+        let result: palantiri.Message;
         result = {
-          driver: "facebook",
+          driverName: "facebook",
           id: messageInfo.messageID,
           author: null,
           body: message.body,
