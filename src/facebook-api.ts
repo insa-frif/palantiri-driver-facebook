@@ -84,7 +84,7 @@ export class FacebookApi extends EventEmitter implements palantiri.Api {
               driverData: nativeInfo
             };
             return account;
-          })
+          });
       });
   }
 
@@ -162,7 +162,7 @@ export class FacebookApi extends EventEmitter implements palantiri.Api {
       });
   }
 
-  addMembersToDiscussion(members: palantiri.AccountId[], discussionId: palantiri.DiscussionId, options?: any): Bluebird<this> {
+  addMembersToDiscussion(members: palantiri.AccountInternalId[], discussionId: palantiri.DiscussionInternalId, options?: any): Bluebird<this> {
     return Bluebird
       .each(members, (memberId) => {
         return Bluebird.fromCallback(this.nativeApi.addUserToGroup.bind(null, memberId, discussionId)); // TODO: normalize errors
@@ -170,7 +170,7 @@ export class FacebookApi extends EventEmitter implements palantiri.Api {
       .thenReturn(this);
   }
 
-  removeMembersFromDiscussion(members: palantiri.AccountId[], discussionId: palantiri.DiscussionId, options?: any): Bluebird<this> {
+  removeMembersFromDiscussion(members: palantiri.AccountInternalId[], discussionId: palantiri.DiscussionInternalId, options?: any): Bluebird<this> {
     return Bluebird
       .each(members, (memberId) => {
         return Bluebird.fromCallback(this.nativeApi.removeUserFromGroup.bind(null, memberId, discussionId)); // TODO: normalize errors
@@ -178,12 +178,12 @@ export class FacebookApi extends EventEmitter implements palantiri.Api {
       .thenReturn(this);
   }
 
-  leaveDiscussion(discussion: palantiri.DiscussionId, options?: any): Bluebird<this> {
+  leaveDiscussion(discussion: palantiri.DiscussionInternalId, options?: any): Bluebird<this> {
     console.warn("FacebokApi:leveDiscussion is not implemented");
     return Bluebird.resolve(this);
   }
 
-  sendMessage(message: palantiri.Api.NewMessage, discussionId: palantiri.DiscussionId, options?: any): Bluebird<palantiri.Message> {
+  sendMessage(message: palantiri.Api.NewMessage, discussionId: palantiri.DiscussionInternalId, options?: any): Bluebird<palantiri.Message> {
     return Bluebird
       .try(() => {
         let fbMessage: fbChatApi.Message = {
