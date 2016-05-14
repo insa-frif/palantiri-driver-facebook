@@ -9,6 +9,28 @@ import {FacebookConnection} from "./facebook-connection";
 
 const DRIVER_NAME: string = "facebook";
 
+function fbThreadToPltrDiscussion (thread: fbChatApi.Thread): Pltr.Discussion {
+  return {
+    id: thread.threadID,
+    driverName: DRIVER_NAME,
+    creationDate: thread.timestamp,
+    name: thread.name,
+    description: thread.snippet,
+    isPrivate: true,
+    participants: [],
+    owner: null, // TODO: Is there an owner ?
+    authorizations: {
+      write: thread.readOnly,
+      talk: thread.canReply,
+      video: true,
+      invite: true,
+      kick: false,
+      ban: false
+    },
+    driverData: thread
+  }
+}
+
 export class FacebookApi extends EventEmitter implements Pltr.Api {
   nativeApi: fbChatApi.Api = null;
   connection: FacebookConnection = null;
@@ -73,6 +95,18 @@ export class FacebookApi extends EventEmitter implements Pltr.Api {
       .thenReturn(this);
   }
 
+  createDiscussion(members: Array<Pltr.AccountReference | Pltr.AccountGlobalId>, options?: Pltr.Api.CreateDiscussionOptions): Bluebird<Pltr.Discussion> {
+    return Bluebird
+      .try(() => {
+        let membersIds: string[] = _.map(members, (member) => Pltr.Id.asReference(member, DRIVER_NAME).id);
+        // TODO: do not send an empty string ?
+        return Bluebird.fromCallback(this.nativeApi.sendMessage.bind(null, "", membersIds)); // TODO: normalize errors
+      })
+      .then((messageInfo: fbChatApi.MessageInfo) => {
+        return this.getDiscussion(messageInfo.threadID);
+      });
+  }
+
   getAccount(account: Pltr.AccountReference | Pltr.AccountGlobalId): Bluebird<Pltr.Account> {
     return Bluebird
       .try(() => {
@@ -121,6 +155,36 @@ export class FacebookApi extends EventEmitter implements Pltr.Api {
     return Bluebird.resolve(this.user);
   }
 
+  /**
+   * PROTECTED
+   * Returns the information associated to a thread from a threadID
+   * @param threadID
+   */
+  protected getDiscussion(threadID: string): Bluebird<Pltr.Discussion> {
+    return Bluebird.fromCallback(this.nativeApi.getThreadInfo.bind(null, threadID)) // TODO: normalize errors
+      .then((threadInfo: fbChatApi.GetThreadInfoResult) => {
+        return {
+          id: threadID,
+          driverName: DRIVER_NAME,
+          creationDate: null, // TODO: fix this
+          name: threadInfo.name,
+          description: threadInfo.snippet, // TODO: check
+          isPrivate: true,
+          participants: [], // TODO: fix this
+          owner: null, // TODO: Is there an owner ?
+          authorizations: {
+            write: true, // TODO: fix this
+            talk: true, // TODO: fix this
+            video: true,
+            invite: true,
+            kick: false,
+            ban: false
+          },
+          driverData: threadInfo
+        }
+      });
+  }
+
   getDiscussions(options?: Pltr.Api.GetDiscussionsOptions): Bluebird<Pltr.Discussion[]> {
     let defaultOptions: Pltr.Api.GetDiscussionsOptions = {
       max: null,
@@ -133,38 +197,12 @@ export class FacebookApi extends EventEmitter implements Pltr.Api {
         let msg: string = (<Error> error).message || (<fbChatApi.ErrorObject> error).error;
         return Bluebird.reject(new Error(msg));
       })
-      .map((thread: fbChatApi.Thread) => {
-        let discussion: Pltr.Discussion;
-
-        // TODO: remove once webstorm is fixed...
-        // noinspection TypeScriptValidateTypes
-        discussion = {
-          id: thread.threadID,
-          driverName: DRIVER_NAME,
-          creationDate: thread.timestamp,
-          name: thread.name,
-          description: thread.snippet,
-          isPrivate: true,
-          participants: [],
-          owner: null, // TODO: Is there an owner ?
-          authorizations: {
-            write: thread.readOnly,
-            talk: thread.canReply,
-            video: true,
-            invite: true,
-            kick: false,
-            ban: false
-          },
-          driverData: thread
-        };
-
-        return discussion;
-      })
+      .map(fbThreadToPltrDiscussion)
       .filter((discussion: Pltr.Discussion) => {
         if (!options.filter) {
-          return true;
+          return Bluebird.resolve(true);
         }
-        return options.filter(discussion);
+        return Bluebird.resolve(options.filter(discussion));
       });
   }
 
