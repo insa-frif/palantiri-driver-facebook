@@ -1,7 +1,7 @@
 import * as fbChatApi from "facebook-chat-api";
 import * as Bluebird from "bluebird";
 import * as _ from "lodash";
-import Incident from "incident";
+import {Incident} from "incident";
 import {EventEmitter} from "events";
 
 import * as Pltr from "palantiri-interfaces";
