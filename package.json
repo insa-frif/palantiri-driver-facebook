@@ -1,6 +1,6 @@
 {
   "name": "palantiri-driver-facebook",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Facebook driver for palantiri",
   "main": "dist/node/main.js",
   "repository": {
