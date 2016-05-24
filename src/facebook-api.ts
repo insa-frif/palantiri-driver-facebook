@@ -95,11 +95,11 @@ export class FacebookApi extends EventEmitter implements Pltr.Api {
       .thenReturn(this);
   }
 
-  createDiscussion(members: Array<Pltr.AccountReference | Pltr.AccountGlobalId>, options?: Pltr.Api.CreateDiscussionOptions): Bluebird<Pltr.Discussion> {
+  createDiscussion (members: Array<Pltr.AccountReference | Pltr.AccountGlobalId>, options?: Pltr.Api.CreateDiscussionOptions): Bluebird<Pltr.Discussion> {
     let discussionPromise: Bluebird<Pltr.Discussion>;
 
     if ((!Array.isArray(members)) ||members.length === 0) {
-      discussionPromise = Bluebird.reject("No members provided to create discussion");
+      discussionPromise = Bluebird.reject(new Incident("No members provided to create discussion"));
     } else if (members.length === 1) {
       console.warn("WE ARE NOT CREATING A NEW DISCUSSION BUT RESOLVING AN OLDER PRIVATE DISCUSSION");
       discussionPromise = Bluebird
