@@ -98,9 +98,24 @@ export class FacebookApi extends EventEmitter implements Pltr.Api {
   createDiscussion(members: Array<Pltr.AccountReference | Pltr.AccountGlobalId>, options?: Pltr.Api.CreateDiscussionOptions): Bluebird<Pltr.Discussion> {
     return Bluebird
       .try(() => {
-        let membersIds: string[] = _.map(members, (member) => Pltr.Id.asReference(member, DRIVER_NAME).id);
-        // TODO: do not send an empty string ?
-        return Bluebird.fromCallback(this.nativeApi.sendMessage.bind(null, "", membersIds)); // TODO: normalize errors
+        let memberIds: string[] = _.map(members, (member) => Pltr.Id.asReference(member, DRIVER_NAME).id);
+
+        let msg: fbChatApi.Message = {
+          body: "new-chat-" + Date.now()
+        };
+
+        let target: string | string[] =  memberIds.length === 1 ? memberIds[0] : memberIds;
+        console.log(target);
+
+        return Bluebird.fromCallback((cb: Function) => {
+          this.nativeApi.sendMessage(msg, target, function(err, info) {
+            if (err) {
+              return cb (new Error(err.error));
+            }
+            console.log(info);
+            cb (null, info);
+          });
+        }); // TODO: normalize errors
       })
       .then((messageInfo: fbChatApi.MessageInfo) => {
         return this.getDiscussion(messageInfo.threadID);
@@ -163,7 +178,7 @@ export class FacebookApi extends EventEmitter implements Pltr.Api {
   protected getDiscussion(threadID: string): Bluebird<Pltr.Discussion> {
     return Bluebird.fromCallback(this.nativeApi.getThreadInfo.bind(null, threadID)) // TODO: normalize errors
       .then((threadInfo: fbChatApi.GetThreadInfoResult) => {
-        return {
+        let pltrDiscu: Pltr.Discussion = {
           id: threadID,
           driverName: DRIVER_NAME,
           creationDate: null, // TODO: fix this
@@ -181,7 +196,19 @@ export class FacebookApi extends EventEmitter implements Pltr.Api {
             ban: false
           },
           driverData: threadInfo
-        }
+        };
+        return pltrDiscu;
+      });
+  }
+
+  protected loadParticipants (pltrDiscu: Pltr.Discussion, participantIds: string[]): Bluebird<Pltr.Discussion> {
+    return Bluebird
+      .map(participantIds, ((id: string) => {
+        return this.getAccount({driverName: DRIVER_NAME, id: id});
+      }))
+      .then((participants: Pltr.Account[]) => {
+        pltrDiscu.participants = participants;
+        return pltrDiscu;
       });
   }
 
@@ -197,7 +224,10 @@ export class FacebookApi extends EventEmitter implements Pltr.Api {
         let msg: string = (<Error> error).message || (<fbChatApi.ErrorObject> error).error;
         return Bluebird.reject(new Error(msg));
       })
-      .map(fbThreadToPltrDiscussion)
+      .map((fbThread: fbChatApi.Thread) => {
+        let pltrDiscu: Pltr.Discussion = fbThreadToPltrDiscussion(fbThread);
+        return this.loadParticipants(pltrDiscu, fbThread.participantIDs);
+      })
       .filter((discussion: Pltr.Discussion) => {
         if (!options.filter) {
           return Bluebird.resolve(true);
