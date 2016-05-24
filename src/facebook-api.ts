@@ -96,6 +96,42 @@ export class FacebookApi extends EventEmitter implements Pltr.Api {
   }
 
   createDiscussion(members: Array<Pltr.AccountReference | Pltr.AccountGlobalId>, options?: Pltr.Api.CreateDiscussionOptions): Bluebird<Pltr.Discussion> {
+    if ((!Array.isArray(members)) ||members.length === 0) {
+      return Bluebird.reject("No members provided to create discussion");
+    } else if (members.length === 1) {
+      console.warn("WE ARE NOT CREATING A NEW DISCUSSION BUT RESOLVING AN OLDER PRIVATE DISCUSSION");
+      return Bluebird
+        .try(() => {
+          let memberIds: string[] = _.map(members, (member) => Pltr.Id.asReference(member, DRIVER_NAME).id);
+          let pltrDiscu: Pltr.Discussion;
+          pltrDiscu = {
+            id: memberIds[0],
+            driverName: DRIVER_NAME,
+            creationDate: null,
+            name: memberIds[0],
+            description: "private discussion",
+            isPrivate: true,
+            participants: [],
+            owner: null,
+            authorizations: {
+              write: true,
+              talk: true,
+              video: true,
+              invite: true,
+              kick: false,
+              ban: false
+            },
+            driverData: {}
+          };
+          return this.loadParticipants(pltrDiscu, memberIds);
+        })
+        .then((discu: Pltr.Discussion) => {
+          discu.name = discu.participants[0].name;
+          return discu;
+        })
+    }
+    
+    // case with many members
     return Bluebird
       .try(() => {
         let memberIds: string[] = _.map(members, (member) => Pltr.Id.asReference(member, DRIVER_NAME).id);
@@ -103,16 +139,12 @@ export class FacebookApi extends EventEmitter implements Pltr.Api {
         let msg: fbChatApi.Message = {
           body: "new-chat-" + Date.now()
         };
-
         let target: string | string[] =  memberIds.length === 1 ? memberIds[0] : memberIds;
-        console.log(target);
-
         return Bluebird.fromCallback((cb: Function) => {
           this.nativeApi.sendMessage(msg, target, function(err, info) {
             if (err) {
               return cb (new Error(err.error));
             }
-            console.log(info);
             cb (null, info);
           });
         }); // TODO: normalize errors
