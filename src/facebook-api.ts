@@ -96,11 +96,13 @@ export class FacebookApi extends EventEmitter implements Pltr.Api {
   }
 
   createDiscussion(members: Array<Pltr.AccountReference | Pltr.AccountGlobalId>, options?: Pltr.Api.CreateDiscussionOptions): Bluebird<Pltr.Discussion> {
+    let discussionPromise: Bluebird<Pltr.Discussion>;
+
     if ((!Array.isArray(members)) ||members.length === 0) {
-      return Bluebird.reject("No members provided to create discussion");
+      discussionPromise = Bluebird.reject("No members provided to create discussion");
     } else if (members.length === 1) {
       console.warn("WE ARE NOT CREATING A NEW DISCUSSION BUT RESOLVING AN OLDER PRIVATE DISCUSSION");
-      return Bluebird
+      discussionPromise = Bluebird
         .try(() => {
           let memberIds: string[] = _.map(members, (member) => Pltr.Id.asReference(member, DRIVER_NAME).id);
           let pltrDiscu: Pltr.Discussion;
@@ -129,28 +131,40 @@ export class FacebookApi extends EventEmitter implements Pltr.Api {
           discu.name = discu.participants[0].name;
           return discu;
         })
-    }
-    
-    // case with many members
-    return Bluebird
-      .try(() => {
-        let memberIds: string[] = _.map(members, (member) => Pltr.Id.asReference(member, DRIVER_NAME).id);
+    } else {
+      // case with many members
+      discussionPromise = Bluebird
+        .try(() => {
+          let memberIds: string[] = _.map(members, (member) => Pltr.Id.asReference(member, DRIVER_NAME).id);
 
-        let msg: fbChatApi.Message = {
-          body: "new-chat-" + Date.now()
-        };
-        let target: string | string[] =  memberIds.length === 1 ? memberIds[0] : memberIds;
-        return Bluebird.fromCallback((cb: Function) => {
-          this.nativeApi.sendMessage(msg, target, function(err, info) {
-            if (err) {
-              return cb (new Error(err.error));
-            }
-            cb (null, info);
+          let msg: fbChatApi.Message = {
+            body: "new-chat-" + Date.now()
+          };
+          let target: string | string[] =  memberIds.length === 1 ? memberIds[0] : memberIds;
+          return Bluebird.fromCallback((cb: Function) => {
+            this.nativeApi.sendMessage(msg, target, function(err, info) {
+              if (err) {
+                return cb (new Error(err.error));
+              }
+              cb (null, info);
+            });
+          }); // TODO: normalize errors
+        })
+        .then((messageInfo: fbChatApi.MessageInfo) => {
+          return this.getDiscussion(messageInfo.threadID);
+        });
+    }
+
+    return discussionPromise
+      .then((discu: Pltr.Discussion) => {
+        if(discu && discu.participants) {
+          discu.participants = _.filter(discu.participants, (participant: Pltr.Account) => {
+            console.log(this.user.id);
+            console.log(participant.id);
+            return participant.id !== this.user.id;
           });
-        }); // TODO: normalize errors
-      })
-      .then((messageInfo: fbChatApi.MessageInfo) => {
-        return this.getDiscussion(messageInfo.threadID);
+        }
+        return discu;
       });
   }
 
@@ -169,7 +183,7 @@ export class FacebookApi extends EventEmitter implements Pltr.Api {
             let nativeInfo = results[accountRef.id];
             let account: Pltr.Account = {
               driverName: DRIVER_NAME,
-              id: String(this.nativeApi.getCurrentUserID()),
+              id: String(accountRef.id),
               avatarUrl: nativeInfo.thumbSrc,
               name: nativeInfo.name,
               driverData: nativeInfo
@@ -234,6 +248,7 @@ export class FacebookApi extends EventEmitter implements Pltr.Api {
   }
 
   protected loadParticipants (pltrDiscu: Pltr.Discussion, participantIds: string[]): Bluebird<Pltr.Discussion> {
+    console.log(participantIds);
     return Bluebird
       .map(participantIds, ((id: string) => {
         return this.getAccount({driverName: DRIVER_NAME, id: id});
@@ -259,6 +274,16 @@ export class FacebookApi extends EventEmitter implements Pltr.Api {
       .map((fbThread: fbChatApi.Thread) => {
         let pltrDiscu: Pltr.Discussion = fbThreadToPltrDiscussion(fbThread);
         return this.loadParticipants(pltrDiscu, fbThread.participantIDs);
+      })
+      .map((discu: Pltr.Discussion) => {
+        if(discu && discu.participants) {
+          discu.participants = _.filter(discu.participants, (participant: Pltr.Account) => {
+            console.log(this.user.id);
+            console.log(participant.id);
+            return participant.id !== this.user.id;
+          });
+        }
+        return discu;
       })
       .filter((discussion: Pltr.Discussion) => {
         if (!options.filter) {
